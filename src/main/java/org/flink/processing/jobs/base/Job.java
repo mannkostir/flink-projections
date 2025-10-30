@@ -58,9 +58,9 @@ public abstract class Job {
         return builder;
     }
 
-    private <Payload extends SpecificRecordBase> KafkaSinkBuilder<SinkRecord<Payload>> getKafkaSinkBuilder (
+    private <Payload extends SpecificRecordBase, Sink extends SinkRecord<Payload>> KafkaSinkBuilder<Sink> getKafkaSinkBuilder (
     ) {
-        KafkaSinkBuilder<SinkRecord<Payload>> builder = KafkaSink.<SinkRecord<Payload>>builder()
+        KafkaSinkBuilder<Sink> builder = KafkaSink.<Sink>builder()
                                                   .setBootstrapServers(this.kafkaConfig.bootstrapServers())
                                                   .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
                                                   .setKafkaProducerConfig(this.kafkaConfig.buildProducerProperties())
@@ -70,12 +70,12 @@ public abstract class Job {
         return builder;
     }
 
-    private <Payload extends SpecificRecordBase> KafkaSource<EnvelopeRecord<Payload>> getKafkaSource (
-            KafkaTopic topic, IEnvelopeSpecificRecord<Payload, EnvelopeRecord<Payload>> transformer
+    private <Payload extends SpecificRecordBase, SourceRecord extends EnvelopeRecord<Payload>> KafkaSource<SourceRecord> getKafkaSource (
+            KafkaTopic topic, IEnvelopeSpecificRecord<Payload, SourceRecord> transformer
     ) {
         this.kafkaAdmin.validateIfTopicExists(topic);
 
-        return this.<EnvelopeRecord<Payload>>getKafkaSourceBuilder(topic)
+        return this.<SourceRecord>getKafkaSourceBuilder(topic)
                    .setDeserializer(new RecordEnvelopeDeserializer<>(transformer, this.kafkaConfig.schemaRegistryUrl()))
                    .build();
     }
@@ -90,13 +90,13 @@ public abstract class Job {
                    .build();
     }
 
-    protected final <SinkPayload extends SpecificRecordBase> KafkaSink<SinkRecord<SinkPayload>> getKafkaSink (
+    protected final <SinkPayload extends SpecificRecordBase, Sink extends SinkRecord<SinkPayload>> KafkaSink<Sink> getKafkaSink (
             JobSourceOutput<SinkPayload> sourceOutput
     ) {
         this.kafkaAdmin.validateIfTopicExists(sourceOutput.outputTopic);
 
-        return this.<SinkPayload>getKafkaSinkBuilder()
-                   .setRecordSerializer(new RecordSerializer<SinkPayload>(sourceOutput.outputTopic.getName(),
+        return this.<SinkPayload, Sink>getKafkaSinkBuilder()
+                   .setRecordSerializer(new RecordSerializer<SinkPayload, Sink>(sourceOutput.outputTopic.getName(),
                                                                sourceOutput.sourceClass,
                                                                this.kafkaConfig.schemaRegistryUrl()
                    ))
@@ -124,10 +124,10 @@ public abstract class Job {
                              .name("kafka-source_" + this.jobName + "_" + name);
     }
 
-    protected <SourcePayload extends SpecificRecordBase> DataStream<EnvelopeRecord<SourcePayload>> getStreamFromKafkaSource (
-            JobSourceInput<SourcePayload, EnvelopeRecord<SourcePayload>> sourceInput
+    protected <SourcePayload extends SpecificRecordBase, SourceRecord extends EnvelopeRecord<SourcePayload>> DataStream<SourceRecord> getStreamFromKafkaSource (
+            JobSourceInput<SourcePayload, SourceRecord> sourceInput
     ) {
-        KafkaSource<EnvelopeRecord<SourcePayload>> source;
+        KafkaSource<SourceRecord> source;
 
         source = this.getKafkaSource(sourceInput.inputTopic, sourceInput.transformer);
 

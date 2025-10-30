@@ -3,7 +3,7 @@ package org.flink;
 import java.util.ArrayList;
 
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.flink.processing.jobs.Job;
+import org.flink.processing.jobs.base.Job;
 
 public abstract class Director {
     protected final StreamExecutionEnvironment streamEnv;

@@ -1,6 +1,8 @@
 package org.flink.processing.records;
 
-public class EnvelopeRecord<Payload extends Object> {
+import org.flink.processing.records.interfaces.CommonRecord;
+
+public class EnvelopeRecord<Payload extends Object> implements CommonRecord {
     private final Payload payload;
 
     public EnvelopeRecord (Payload payload) {

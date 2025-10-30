@@ -9,19 +9,19 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.flink.processing.records.EnvelopeRecord;
 import org.flink.processing.records.interfaces.IEnvelopeSpecificRecord;
 
-public class RecordEnvelopeDeserializer<SourcePayload extends SpecificRecordBase>
-        implements KafkaRecordDeserializationSchema<EnvelopeRecord<SourcePayload>> {
-    private final IEnvelopeSpecificRecord<SourcePayload, EnvelopeRecord<SourcePayload>> transformer;
+public class RecordEnvelopeDeserializer<SourcePayload extends SpecificRecordBase, SourceRecord extends EnvelopeRecord<SourcePayload>>
+        implements KafkaRecordDeserializationSchema<SourceRecord> {
+    private final IEnvelopeSpecificRecord<SourcePayload, SourceRecord> transformer;
     private final String schemaRegistryUrl;
 
-    public RecordEnvelopeDeserializer (IEnvelopeSpecificRecord<SourcePayload, EnvelopeRecord<SourcePayload>> transformer, String schemaRegistryUrl) {
+    public RecordEnvelopeDeserializer (IEnvelopeSpecificRecord<SourcePayload, SourceRecord> transformer, String schemaRegistryUrl) {
         super();
         this.transformer = transformer;
         this.schemaRegistryUrl = schemaRegistryUrl;
     }
 
     @Override
-    public void deserialize (ConsumerRecord<byte[], byte[]> record, Collector<EnvelopeRecord<SourcePayload>> out) {
+    public void deserialize (ConsumerRecord<byte[], byte[]> record, Collector<SourceRecord> out) {
         try {
             var r = ConfluentRegistryAvroDeserializationSchema.forSpecific(
                     this.transformer.specificRecordClass(),
@@ -36,7 +36,7 @@ public class RecordEnvelopeDeserializer<SourcePayload extends SpecificRecordBase
     }
 
     @Override
-    public TypeInformation<EnvelopeRecord<SourcePayload>> getProducedType () {
+    public TypeInformation<SourceRecord> getProducedType () {
         return this.transformer.envelopeTypeInformation();
     }
 }

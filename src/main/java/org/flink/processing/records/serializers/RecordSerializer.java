@@ -9,8 +9,8 @@ import org.apache.flink.formats.avro.registry.confluent.ConfluentRegistryAvroSer
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.flink.processing.records.SinkRecord;
 
-public class RecordSerializer<Payload extends SpecificRecordBase>
-        implements KafkaRecordSerializationSchema<SinkRecord<Payload>> {
+public class RecordSerializer<Payload extends SpecificRecordBase, Sink extends SinkRecord<Payload>>
+        implements KafkaRecordSerializationSchema<Sink> {
     private final String topic;
     private final AvroSerializationSchema<Payload> avroSerializationSchema;
 
@@ -25,7 +25,7 @@ public class RecordSerializer<Payload extends SpecificRecordBase>
 
     @Override
     public ProducerRecord<byte[], byte[]> serialize (
-            SinkRecord<Payload> record, KafkaSinkContext context, Long timestamp
+        Sink record, KafkaSinkContext context, Long timestamp
     ) {
         return new ProducerRecord<>(topic,
                                     null,
