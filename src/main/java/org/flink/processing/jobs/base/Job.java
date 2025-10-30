@@ -1,4 +1,4 @@
-package org.flink.processing.jobs;
+package org.flink.processing.jobs.base;
 
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -15,6 +15,8 @@ import org.flink.io.kafka.KafkaAdmin;
 import org.flink.io.kafka.config.KafkaClientConfig;
 import org.flink.io.kafka.config.KafkaClientConfig.OffsetStrategy;
 import org.flink.io.kafka.topics.KafkaTopic;
+import org.flink.processing.jobs.JobSourceInput;
+import org.flink.processing.jobs.JobSourceOutput;
 import org.flink.processing.records.EnvelopeRecord;
 import org.flink.processing.records.SinkRecord;
 import org.flink.processing.records.interfaces.IEnvelopeSpecificRecord;
