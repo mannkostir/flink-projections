@@ -21,3 +21,9 @@ out/
 
 # Logs
 *.log
+
+# Claude
+CLAUDE.md
+.claude/
+.mcp.json
+.superpowers
