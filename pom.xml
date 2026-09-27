@@ -4,18 +4,18 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.github.mannkostir</groupId>
-  <artifactId>flink-use-cases-framework</artifactId>
+  <artifactId>flink-projections</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>flink-use-cases-framework</name>
-  <description>Reusable building blocks for common Apache Flink use cases: Kafka sources and sinks, Avro serde, and stateful transform, group-by-key and enrich operators.</description>
-  <url>https://github.com/mannkostir/flink-use-cases-framework</url>
+  <name>flink-projections</name>
+  <description>Stateful Flink projections of entity streams into documents: joins, grouping and deletes, with state you control.</description>
+  <url>https://github.com/mannkostir/flink-projections</url>
 
   <scm>
-    <url>https://github.com/mannkostir/flink-use-cases-framework</url>
-    <connection>scm:git:https://github.com/mannkostir/flink-use-cases-framework.git</connection>
-    <developerConnection>scm:git:git@github.com:mannkostir/flink-use-cases-framework.git</developerConnection>
+    <url>https://github.com/mannkostir/flink-projections</url>
+    <connection>scm:git:https://github.com/mannkostir/flink-projections.git</connection>
+    <developerConnection>scm:git:git@github.com:mannkostir/flink-projections.git</developerConnection>
   </scm>
 
   <properties>
