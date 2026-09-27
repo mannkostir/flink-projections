@@ -134,7 +134,10 @@ Class names never contribute to a `uid` or a state name.
 
 Every `Nest` child slot and every `Lookup` entity input passes through a routing step keyed by the entity `id`. The step keeps the entity's last value.
 
-- **`Upsert` whose target key differs from the last value's key** (the target key is the parent key for `Nest`, or the lookup key for `Lookup`): emit `Delete(id, lastValue)` first, which routes to the old key, then the `Upsert`, which routes to the new key.
+- **`Upsert` whose target key differs from the last value's key** (the target key is the parent key for `Nest`, or the lookup key for `Lookup`): emit a relocation `Delete(id, lastValue)` first, which routes to the old key, then the `Upsert`, which routes to the new key.
+- **What a relocation does:**
+  - For `Nest`, a relocation is an ordinary child `Delete` at the old parent.
+  - For `Lookup`, a relocation only removes the entity from the old key's state and emits nothing. Otherwise two parallel `Lookup` instances would each emit output for the same entity id, and Flink does not order those.
 - **Any other `Upsert`:** forward it and store the value.
 - **`Delete`:** forward it and clear the stored value.
 
@@ -162,7 +165,9 @@ Further rules:
 | Event | `requireMatch(false)` | `requireMatch(true)` |
 |---|---|---|
 | Entity `Upsert` | store; emit `Upsert(enrich(entity, dimension or null))` | store; emit only if a dimension is present |
-| Entity `Delete` | remove; emit `Delete(id, enrich(lastEntity, dimension or null))` | remove; emit `Delete` only if a dimension is present |
+| Entity `Delete` of a stored entity | remove; emit `Delete(id, enrich(storedEntity, dimension or null))` | remove; emit `Delete` only if a dimension is present |
+| Entity `Delete` of an unknown entity | none | none |
+| Entity relocation (lookup key changed) | remove from the old key; emit nothing | remove from the old key; emit nothing |
 | Dimension `Upsert` | store; re-emit `Upsert` for every stored entity | store; emit `Upsert` for every stored entity |
 | Dimension `Delete` | clear dimension; re-emit every entity enriched with `null` | clear dimension; emit `Delete(id, enrich(entity, oldDimension))` for every stored entity |
 
@@ -178,13 +183,14 @@ Entities are never dropped because a dimension changes.
 - Changes for one entity arrive in order. This holds when the source is partitioned by entity id.
 - No ordering is assumed across entities.
 - Final documents converge regardless of interleaving.
+- **Known limitation:** if an entity's lookup key changes at the same moment its old dimension changes, the old `Lookup` instance may emit one stale enrichment after the new instance's output. The next change to that entity or its new dimension corrects it. Fixing this needs per-entity versioning, which is out of scope.
 
 ## Serialization
 
 - `Change<T>` has an explicit `TypeInformation` and `TypeSerializer`:
   - the serializer writes one kind byte, the id, and the value using the element's own serializer;
   - it has a `TypeSerializerSnapshot` that stores the element serializer's snapshot, so savepoints restore across library versions.
-- The internal tagged-union child stream and the routing state get the same treatment.
+- The internal streams get the same treatment: the tagged-union child stream of a `Nest` level, and the relocation-flagged entity stream of a `Lookup`.
 - Nothing relies on Kryo. Tests run with generic types disabled (`pipeline.generic-types: false`).
 
 ## Build
