@@ -51,7 +51,7 @@ The README has two parts:
 - **Pitch**, in this order:
   1. The problem, told through the candidate / experiences / skills example.
   2. The pipeline: entity streams → keyed join → group into document → upsert or delete downstream.
-  3. **Why not Flink SQL:** SQL owns the state. A query change or a Flink upgrade can re-plan the job and make savepoints unrestorable. Per-side TTL and delete semantics are out of reach. Debugging means reading generated code.
+  3. **Why not Flink SQL:** SQL owns the state. A query change or a Flink upgrade can re-plan the job and make savepoints unrestorable. State TTL is a planner hint rather than part of the operator's contract, and delete handling follows the planner's changelog rules rather than the domain's. Debugging means reading generated code.
   4. **Promises:**
      - stable operator ids and state names as a compatibility contract;
      - explicit delete semantics, where a child removal updates the document and a root removal deletes it;
