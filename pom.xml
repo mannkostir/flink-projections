@@ -20,6 +20,7 @@
 
   <modules>
     <module>flink-projections</module>
+    <module>flink-projections-kafka</module>
   </modules>
 
   <properties>
