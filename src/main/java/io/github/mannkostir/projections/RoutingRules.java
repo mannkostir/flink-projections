@@ -14,7 +14,13 @@ final class RoutingRules<T> implements Serializable {
     }
 
     List<Routed<T>> route(T lastValue, Change<T> incoming) throws Exception {
-        if (incoming instanceof Upsert<T> && lastValue != null && movesTarget(lastValue, incoming.value())) {
+        if (lastValue == null) {
+            return List.of(new Routed<>(incoming, false));
+        }
+        if (incoming instanceof Delete<T>) {
+            return List.of(new Routed<>(new Delete<>(incoming.id(), lastValue), false));
+        }
+        if (movesTarget(lastValue, incoming.value())) {
             return List.of(new Routed<>(new Delete<>(incoming.id(), lastValue), true), new Routed<>(incoming, false));
         }
         return List.of(new Routed<>(incoming, false));

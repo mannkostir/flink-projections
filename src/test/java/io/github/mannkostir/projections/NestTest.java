@@ -31,6 +31,22 @@ class NestTest {
     }
 
     @Test
+    void softDeleteWithNullParentKeyRemovesChild() throws Exception {
+        StreamExecutionEnvironment env = ChangesTest.environment();
+        Nest<String> candidates = Nest.parent("candidate", changes(env, new Upsert<>("c1", "alice")), Types.STRING);
+        ChildSlot<String> skills = candidates.child(
+                "skills",
+                changes(env, new Upsert<>("s1", "java@c1"), new Delete<>("s1", "java")),
+                NestTest::parentKeyOrNull,
+                Types.STRING);
+
+        DataStream<Change<String>> documents = candidates.assemble(
+                (parent, children) -> parent + children.get(skills), Types.STRING);
+
+        assertThat(documents.executeAndCollect(10)).last().isEqualTo(new Upsert<>("c1", "alice[]"));
+    }
+
+    @Test
     void namesOperatorsAfterLevelAndSlots() {
         StreamExecutionEnvironment env = ChangesTest.environment();
         Nest<String> candidates = Nest.parent("candidate", changes(env, new Upsert<>("c1", "alice")), Types.STRING);
@@ -86,6 +102,10 @@ class NestTest {
 
     static String parentOf(String child) {
         return child.split("@")[1];
+    }
+
+    static String parentKeyOrNull(String child) {
+        return child.contains("@") ? child.split("@")[1] : null;
     }
 
     @SafeVarargs
