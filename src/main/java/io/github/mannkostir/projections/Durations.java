@@ -12,4 +12,8 @@ final class Durations {
         }
         return duration;
     }
+
+    static Duration requirePositiveIfSet(boolean set, Duration duration, String option) {
+        return set ? requirePositive(duration, option) : null;
+    }
 }

@@ -52,12 +52,8 @@ public final class NestOptions implements Serializable {
 
         public NestOptions build() {
             return new NestOptions(
-                    validated(parentStateTtlSet, parentStateTtl, "parentStateTtl"),
-                    validated(orphanTimeoutSet, orphanTimeout, "orphanTimeout"));
-        }
-
-        private static Duration validated(boolean set, Duration duration, String option) {
-            return set ? Durations.requirePositive(duration, option) : null;
+                    Durations.requirePositiveIfSet(parentStateTtlSet, parentStateTtl, "parentStateTtl"),
+                    Durations.requirePositiveIfSet(orphanTimeoutSet, orphanTimeout, "orphanTimeout"));
         }
     }
 }

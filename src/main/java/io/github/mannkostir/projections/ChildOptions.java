@@ -37,11 +37,7 @@ public final class ChildOptions implements Serializable {
         }
 
         public ChildOptions build() {
-            return new ChildOptions(validated(stateTtlSet, stateTtl, "stateTtl"));
-        }
-
-        private static Duration validated(boolean set, Duration duration, String option) {
-            return set ? Durations.requirePositive(duration, option) : null;
+            return new ChildOptions(Durations.requirePositiveIfSet(stateTtlSet, stateTtl, "stateTtl"));
         }
     }
 }
