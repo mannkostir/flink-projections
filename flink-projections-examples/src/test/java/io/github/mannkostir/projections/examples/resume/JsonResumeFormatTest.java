@@ -6,8 +6,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.flink.api.common.serialization.DeserializationSchema;
+import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.formats.json.JsonDeserializationSchema;
-import org.apache.flink.formats.json.JsonSerializationSchema;
 import org.junit.jupiter.api.Test;
 
 class JsonResumeFormatTest {
@@ -47,7 +47,7 @@ class JsonResumeFormatTest {
     void documentsRoundTrip() throws Exception {
         CandidateDoc doc = new CandidateDoc("c1", "alice",
                 List.of(new ExperienceDoc("e1", "c1", "dev", "Acme", List.of("search"))), List.of("java"));
-        JsonSerializationSchema<CandidateDoc> writer = (JsonSerializationSchema<CandidateDoc>) format.documents("resume.candidate-docs");
+        SerializationSchema<CandidateDoc> writer = format.documents("resume.candidate-docs");
         writer.open(null);
         JsonDeserializationSchema<CandidateDoc> reader = new JsonDeserializationSchema<>(ResumeTypes.CANDIDATE_DOC);
         reader.open(null);
