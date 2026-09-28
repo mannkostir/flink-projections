@@ -24,10 +24,13 @@ public final class Nest<P> {
     }
 
     public static <P> Nest<P> parent(String name, DataStream<Change<P>> parents, TypeInformation<P> type) {
+        Objects.requireNonNull(parents, "parents");
+        Objects.requireNonNull(type, "type");
         return new Nest<>(Names.requireValid(name, "Nest name"), parents, type);
     }
 
     public Nest<P> withOptions(NestOptions options) {
+        requireNotAssembled();
         this.options = Objects.requireNonNull(options, "options");
         return this;
     }
@@ -44,6 +47,9 @@ public final class Nest<P> {
             TypeInformation<C> type,
             ChildOptions options) {
         requireNotAssembled();
+        Objects.requireNonNull(children, "children");
+        Objects.requireNonNull(parentKey, "parentKey");
+        Objects.requireNonNull(type, "type");
         requireUniqueSlot(Names.requireValid(slot, "Child slot name"));
         ChildSlot<C> handle = new ChildSlot<>(name, slot, slots.size());
         slots.add(new SlotDefinition<>(handle, children, parentKey, type, Objects.requireNonNull(options, "options")));
@@ -52,6 +58,8 @@ public final class Nest<P> {
 
     public <O> DataStream<Change<O>> assemble(Assembler<P, O> assembler, TypeInformation<O> type) {
         requireNotAssembled();
+        Objects.requireNonNull(assembler, "assembler");
+        Objects.requireNonNull(type, "type");
         if (slots.isEmpty()) {
             throw new ProjectionConfigurationException(
                     "Nest '" + name + "' has no child slots: call child(...) at least once before assemble(...)");

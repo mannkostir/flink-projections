@@ -1,5 +1,7 @@
 package io.github.mannkostir.projections;
 
+import java.util.Objects;
+
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.functions.KeySelector;
@@ -19,6 +21,10 @@ public final class Changes {
             KeySelector<T, String> id,
             FilterFunction<T> isDeleted,
             TypeInformation<T> type) {
+        Objects.requireNonNull(stream, "stream");
+        Objects.requireNonNull(id, "id");
+        Objects.requireNonNull(isDeleted, "isDeleted");
+        Objects.requireNonNull(type, "type");
         String uid = ContractNames.changesUid(Names.requireValid(name, "Changes name"));
         return stream.map(new ToChange<>(id, isDeleted), typeInfo(type)).uid(uid).name(uid);
     }

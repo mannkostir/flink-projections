@@ -89,6 +89,28 @@ class NestTest {
     }
 
     @Test
+    void rejectsOptionsAfterAssemble() {
+        StreamExecutionEnvironment env = ChangesTest.environment();
+        Nest<String> candidates = Nest.parent("candidate", changes(env, new Upsert<>("c1", "alice")), Types.STRING);
+        candidates.child("skills", changes(env, new Upsert<>("s1", "java@c1")), NestTest::parentOf, Types.STRING);
+        candidates.assemble((parent, children) -> parent, Types.STRING);
+
+        assertThatThrownBy(() -> candidates.withOptions(NestOptions.defaults()))
+                .isInstanceOf(ProjectionConfigurationException.class)
+                .hasMessageContaining("already assembled");
+    }
+
+    @Test
+    void rejectsNullParentKeySelector() {
+        StreamExecutionEnvironment env = ChangesTest.environment();
+        Nest<String> candidates = Nest.parent("candidate", changes(env, new Upsert<>("c1", "alice")), Types.STRING);
+
+        assertThatThrownBy(() -> candidates.child("skills", changes(env, new Upsert<>("s1", "java@c1")), null, Types.STRING))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessage("parentKey");
+    }
+
+    @Test
     void rejectsSecondAssemble() {
         StreamExecutionEnvironment env = ChangesTest.environment();
         Nest<String> candidates = Nest.parent("candidate", changes(env, new Upsert<>("c1", "alice")), Types.STRING);
