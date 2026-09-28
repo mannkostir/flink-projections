@@ -31,13 +31,15 @@ public final class LookupOptions implements Serializable {
 
     public static final class Builder {
         private Duration stateTtl;
+        private boolean stateTtlSet;
         private boolean requireMatch;
 
         private Builder() {
         }
 
         public Builder stateTtl(Duration ttl) {
-            this.stateTtl = Durations.requirePositive(ttl, "stateTtl");
+            this.stateTtl = ttl;
+            this.stateTtlSet = true;
             return this;
         }
 
@@ -47,7 +49,11 @@ public final class LookupOptions implements Serializable {
         }
 
         public LookupOptions build() {
-            return new LookupOptions(stateTtl, requireMatch);
+            return new LookupOptions(validated(stateTtlSet, stateTtl, "stateTtl"), requireMatch);
+        }
+
+        private static Duration validated(boolean set, Duration duration, String option) {
+            return set ? Durations.requirePositive(duration, option) : null;
         }
     }
 }

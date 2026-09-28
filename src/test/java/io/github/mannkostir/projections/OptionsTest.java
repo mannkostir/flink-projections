@@ -19,28 +19,28 @@ class OptionsTest {
 
     @Test
     void rejectsZeroParentStateTtl() {
-        assertThatThrownBy(() -> NestOptions.builder().parentStateTtl(Duration.ZERO))
+        assertThatThrownBy(() -> NestOptions.builder().parentStateTtl(Duration.ZERO).build())
                 .isInstanceOf(ProjectionConfigurationException.class)
                 .hasMessageContaining("parentStateTtl");
     }
 
     @Test
     void rejectsNegativeOrphanTimeout() {
-        assertThatThrownBy(() -> NestOptions.builder().orphanTimeout(Duration.ofSeconds(-1)))
+        assertThatThrownBy(() -> NestOptions.builder().orphanTimeout(Duration.ofSeconds(-1)).build())
                 .isInstanceOf(ProjectionConfigurationException.class)
                 .hasMessageContaining("orphanTimeout");
     }
 
     @Test
     void rejectsNullChildStateTtl() {
-        assertThatThrownBy(() -> ChildOptions.builder().stateTtl(null))
+        assertThatThrownBy(() -> ChildOptions.builder().stateTtl(null).build())
                 .isInstanceOf(ProjectionConfigurationException.class)
                 .hasMessageContaining("stateTtl");
     }
 
     @Test
     void rejectsZeroLookupStateTtl() {
-        assertThatThrownBy(() -> LookupOptions.builder().stateTtl(Duration.ZERO))
+        assertThatThrownBy(() -> LookupOptions.builder().stateTtl(Duration.ZERO).build())
                 .isInstanceOf(ProjectionConfigurationException.class)
                 .hasMessageContaining("stateTtl");
     }

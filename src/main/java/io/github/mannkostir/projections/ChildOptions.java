@@ -25,17 +25,23 @@ public final class ChildOptions implements Serializable {
 
     public static final class Builder {
         private Duration stateTtl;
+        private boolean stateTtlSet;
 
         private Builder() {
         }
 
         public Builder stateTtl(Duration ttl) {
-            this.stateTtl = Durations.requirePositive(ttl, "stateTtl");
+            this.stateTtl = ttl;
+            this.stateTtlSet = true;
             return this;
         }
 
         public ChildOptions build() {
-            return new ChildOptions(stateTtl);
+            return new ChildOptions(validated(stateTtlSet, stateTtl, "stateTtl"));
+        }
+
+        private static Duration validated(boolean set, Duration duration, String option) {
+            return set ? Durations.requirePositive(duration, option) : null;
         }
     }
 }
