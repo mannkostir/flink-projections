@@ -21,6 +21,7 @@
   <modules>
     <module>flink-projections</module>
     <module>flink-projections-kafka</module>
+    <module>flink-projections-examples</module>
   </modules>
 
   <properties>
