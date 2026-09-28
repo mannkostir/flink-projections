@@ -87,6 +87,7 @@ class NestRulesTest {
 
         assertThat(out).isEmpty();
         assertThat(state.childCount()).isZero();
+        assertThat(state.lastDoc()).isNull();
     }
 
     @Test

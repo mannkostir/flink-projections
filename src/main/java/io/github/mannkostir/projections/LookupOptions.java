@@ -49,7 +49,8 @@ public final class LookupOptions implements Serializable {
         }
 
         public LookupOptions build() {
-            return new LookupOptions(Durations.requirePositiveIfSet(stateTtlSet, stateTtl, "stateTtl"), requireMatch);
+            return new LookupOptions(
+                    Durations.requirePositiveIfSet(stateTtlSet, stateTtl, "LookupOptions.stateTtl"), requireMatch);
         }
     }
 }

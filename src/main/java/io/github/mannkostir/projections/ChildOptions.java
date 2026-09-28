@@ -37,7 +37,7 @@ public final class ChildOptions implements Serializable {
         }
 
         public ChildOptions build() {
-            return new ChildOptions(Durations.requirePositiveIfSet(stateTtlSet, stateTtl, "stateTtl"));
+            return new ChildOptions(Durations.requirePositiveIfSet(stateTtlSet, stateTtl, "ChildOptions.stateTtl"));
         }
     }
 }

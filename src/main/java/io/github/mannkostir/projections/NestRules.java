@@ -46,7 +46,7 @@ final class NestRules<P, O> implements Serializable {
 
     private void deleteParent(String parentId, LevelState<P, O> state, Consumer<Change<O>> out) throws Exception {
         if (state.parent() == null) {
-            state.clearChildren();
+            state.clearAll();
             return;
         }
         O lastDoc = state.lastDoc();
