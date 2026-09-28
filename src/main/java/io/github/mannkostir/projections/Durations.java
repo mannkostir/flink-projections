@@ -8,7 +8,8 @@ final class Durations {
 
     static Duration requirePositive(Duration duration, String option) {
         if (duration == null || duration.isZero() || duration.isNegative()) {
-            throw new ProjectionConfigurationException(option + " must be a positive duration, got: " + duration);
+            throw new ProjectionConfigurationException(
+                    option + " must be a positive duration, e.g. Duration.ofDays(7); got: " + duration);
         }
         return duration;
     }

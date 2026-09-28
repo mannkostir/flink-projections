@@ -52,8 +52,8 @@ public final class NestOptions implements Serializable {
 
         public NestOptions build() {
             return new NestOptions(
-                    Durations.requirePositiveIfSet(parentStateTtlSet, parentStateTtl, "parentStateTtl"),
-                    Durations.requirePositiveIfSet(orphanTimeoutSet, orphanTimeout, "orphanTimeout"));
+                    Durations.requirePositiveIfSet(parentStateTtlSet, parentStateTtl, "NestOptions.parentStateTtl"),
+                    Durations.requirePositiveIfSet(orphanTimeoutSet, orphanTimeout, "NestOptions.orphanTimeout"));
         }
     }
 }

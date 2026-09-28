@@ -65,6 +65,9 @@ final class ChangeSerializer<T> extends TypeSerializer<Change<T>> {
     @Override
     public Change<T> deserialize(DataInputView source) throws IOException {
         byte kind = source.readByte();
+        if (kind != UPSERT && kind != DELETE) {
+            throw new IOException("Unknown Change kind " + kind);
+        }
         String id = StringValue.readString(source);
         T value = valueSerializer.deserialize(source);
         return kind == DELETE ? new Delete<>(id, value) : new Upsert<>(id, value);
