@@ -31,4 +31,16 @@ class RoutingRulesTest {
         assertThat(rules.route("e1@a", new Delete<>("e1", "e1@a")))
                 .containsExactly(new Routed<>(new Delete<>("e1", "e1@a"), false));
     }
+
+    @Test
+    void deleteRoutesByLastValue() throws Exception {
+        assertThat(rules.route("e1@a", new Delete<>("e1", "e1@b")))
+                .containsExactly(new Routed<>(new Delete<>("e1", "e1@a"), false));
+    }
+
+    @Test
+    void deleteWithoutLastValueIsForwarded() throws Exception {
+        assertThat(rules.route(null, new Delete<>("e1", "e1@b")))
+                .containsExactly(new Routed<>(new Delete<>("e1", "e1@b"), false));
+    }
 }

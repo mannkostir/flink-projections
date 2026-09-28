@@ -139,7 +139,7 @@ Every `Nest` child slot and every `Lookup` entity input passes through a routing
   - For `Nest`, a relocation is an ordinary child `Delete` at the old parent.
   - For `Lookup`, a relocation only removes the entity from the old key's state and emits nothing. Otherwise two parallel `Lookup` instances would each emit output for the same entity id, and Flink does not order those.
 - **Any other `Upsert`:** forward it and store the value.
-- **`Delete`:** forward it and clear the stored value.
+- **`Delete`:** forward it and clear the stored value. When a last value is stored, the forwarded `Delete` carries that last value instead of its own, so it is routed to the key the entity is actually stored under even if the delete's own value changed or nulled that key.
 
 ### Nest, per parent key
 

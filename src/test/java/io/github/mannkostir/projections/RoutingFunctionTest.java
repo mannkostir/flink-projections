@@ -31,6 +31,21 @@ class RoutingFunctionTest {
     }
 
     @Test
+    void forgetsLastValueAfterDelete() throws Exception {
+        try (var harness = harness(Optional.empty())) {
+            harness.open();
+            harness.processElement(new Upsert<>("e1", "e1@a"), 1L);
+            harness.processElement(new Delete<>("e1", "e1@a"), 2L);
+            harness.processElement(new Upsert<>("e1", "e1@b"), 3L);
+
+            assertThat(harness.extractOutputValues()).containsExactly(
+                    new Upsert<>("e1", "e1@a"),
+                    new Delete<>("e1", "e1@a"),
+                    new Upsert<>("e1", "e1@b"));
+        }
+    }
+
+    @Test
     void remembersLastValueAcrossSavepoint() throws Exception {
         OperatorSubtaskState snapshot;
         try (var harness = harness(Optional.empty())) {
