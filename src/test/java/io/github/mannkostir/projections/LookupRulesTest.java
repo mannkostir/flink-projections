@@ -95,6 +95,24 @@ class LookupRulesTest {
     }
 
     @Test
+    void requireMatchEmitsEntityUpsertWhenDimensionPresent() throws Exception {
+        innerJoin().onDimension(new Upsert<>("k1", "acme"), state, out::add);
+        innerJoin().onEntity(entity(new Upsert<>("e1", "dev")), state, out::add);
+
+        assertThat(out).containsExactly(new Upsert<>("e1", "dev@acme"));
+    }
+
+    @Test
+    void requireMatchEmitsEntityDeleteWhenDimensionPresent() throws Exception {
+        innerJoin().onDimension(new Upsert<>("k1", "acme"), state, out::add);
+        innerJoin().onEntity(entity(new Upsert<>("e1", "dev")), state, out::add);
+        out.clear();
+        innerJoin().onEntity(entity(new Delete<>("e1", "dev")), state, out::add);
+
+        assertThat(out).containsExactly(new Delete<>("e1", "dev@acme"));
+    }
+
+    @Test
     void relocatedEntityIsRemovedSilently() throws Exception {
         leftJoin().onDimension(new Upsert<>("k1", "acme"), state, out::add);
         leftJoin().onEntity(entity(new Upsert<>("e1", "dev")), state, out::add);
