@@ -56,6 +56,18 @@ class LookupFunctionTest {
     }
 
     @Test
+    void relocationIsSilentThroughState() throws Exception {
+        try (var harness = harness(LookupOptions.defaults())) {
+            harness.open();
+            harness.processElement2(new Upsert<>("k1", "acme"), 1L);
+            harness.processElement1(new LookupEntity<>(new Upsert<>("e1", "dev#k1"), false), 2L);
+            harness.processElement1(new LookupEntity<>(new Delete<>("e1", "dev#k1"), true), 3L);
+
+            assertThat(harness.extractOutputValues()).containsExactly(new Upsert<>("e1", "dev#k1@acme"));
+        }
+    }
+
+    @Test
     void dimensionExpiresAfterTtl() throws Exception {
         LookupOptions options = LookupOptions.builder().stateTtl(Duration.ofMillis(100)).build();
         try (var harness = harness(options)) {

@@ -184,6 +184,7 @@ Entities are never dropped because a dimension changes.
 - No ordering is assumed across entities.
 - Final documents converge regardless of interleaving.
 - **Known limitation:** if an entity's lookup key changes at the same moment its old dimension changes, the old `Lookup` instance may emit one stale enrichment after the new instance's output. The next change to that entity or its new dimension corrects it. Fixing this needs per-entity versioning, which is out of scope.
+- **Known limitation:** with `requireMatch(true)`, an entity that moves from a key with a dimension to a key without one keeps its last enriched value downstream until that key gets a dimension or the entity changes again: the old key's relocation emits nothing (to avoid the cross-instance race) and the new key emits nothing (no match).
 
 ## Serialization
 
