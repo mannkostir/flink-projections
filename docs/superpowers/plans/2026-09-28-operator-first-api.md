@@ -33,10 +33,7 @@
 - Tests run with `PipelineOptions.GENERIC_TYPES` set to `false`.
 - Zero comments in any file: no `//`, `/* */` or Javadoc. `@SuppressWarnings` annotations are allowed.
 - Commit messages are one lowercase imperative subject of 2 to 6 words, with no body and no trailers.
-- Every Maven command uses `-s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml`. That file is the user's `~/.m2/settings.xml` with `<mirrorOf>*,!confluent</mirrorOf>`. If it's missing, recreate it with:
-  ```bash
-  sed 's#<mirrorOf>\*</mirrorOf>#<mirrorOf>*,!confluent</mirrorOf>#' ~/.m2/settings.xml > /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml
-  ```
+- Every Maven command uses `-s <settings.xml>`: a copy of your Maven settings in which any `<mirrorOf>*</mirrorOf>` mirror excludes nothing the build needs (no extra repositories are required since Flink 2.2.1 is on Maven Central).
 - Stage only the files each task names. Never `git add -A`, `git add .` or `git commit -a`. `CLAUDE.md` and `.mcp.json` are gitignored and never staged.
 - Work on branch `operator-first-api`, which already contains the spec commits.
 - **Verified code:** every code block in this plan was compiled and run against Flink 2.2.1: 123 tests, `mvn clean verify` green. Transcribe the blocks exactly. If a step's actual output differs from its Expected output, stop and report rather than improvising.
@@ -273,7 +270,7 @@ git rm -r -q src/main/java/io/github/mannkostir/projections
 Run: `grep -c "flink.version>2.2.1" pom.xml; find src/main/java -name '*.java' 2>/dev/null | wc -l`
 Expected: `1`, then `0`.
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml clean verify && ls target/*.jar`
+Run: `mvn -q -s <settings.xml> clean verify && ls target/*.jar`
 Expected: exit 0, and three jars: `flink-projections-0.1.0-SNAPSHOT.jar`, `-sources.jar` and `-javadoc.jar`.
 
 - [ ] **Step 5: Commit**
@@ -340,7 +337,7 @@ class ChangeTest {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=ChangeTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=ChangeTest`
 Expected: BUILD FAILURE with compilation errors: cannot find symbol `Upsert` / `Delete`.
 
 - [ ] **Step 3: Write the implementation**
@@ -403,12 +400,12 @@ public record Delete<T>(String id, T value) implements Change<T> {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=ChangeTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=ChangeTest`
 Expected: exit 0, no test failures.
 
 - [ ] **Step 5: Run the whole suite**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml clean verify`
+Run: `mvn -q -s <settings.xml> clean verify`
 Expected: exit 0.
 
 - [ ] **Step 6: Commit**
@@ -479,7 +476,7 @@ class ChangeSerializerTest extends SerializerTestBase<Change<String>> {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=ChangeSerializerTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=ChangeSerializerTest`
 Expected: BUILD FAILURE with compilation error: cannot find symbol `ChangeSerializer`.
 
 - [ ] **Step 3: Write the implementation**
@@ -697,12 +694,12 @@ final class ChangeTypeInfo<T> extends TypeInformation<Change<T>> {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=ChangeSerializerTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=ChangeSerializerTest`
 Expected: exit 0, no test failures.
 
 - [ ] **Step 5: Run the whole suite**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml clean verify`
+Run: `mvn -q -s <settings.xml> clean verify`
 Expected: exit 0.
 
 - [ ] **Step 6: Commit**
@@ -829,7 +826,7 @@ class ChangesTest {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=ContractNamesTest,ChangesTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=ContractNamesTest,ChangesTest`
 Expected: BUILD FAILURE with compilation errors: cannot find symbol `ContractNames` / `Changes` / `ProjectionConfigurationException`.
 
 - [ ] **Step 3: Write the implementation**
@@ -986,12 +983,12 @@ public final class Changes {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=ContractNamesTest,ChangesTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=ContractNamesTest,ChangesTest`
 Expected: exit 0, no test failures.
 
 - [ ] **Step 5: Run the whole suite**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml clean verify`
+Run: `mvn -q -s <settings.xml> clean verify`
 Expected: exit 0.
 
 - [ ] **Step 6: Commit**
@@ -1154,7 +1151,7 @@ class RoutingFunctionTest {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=RoutingRulesTest,RoutingFunctionTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=RoutingRulesTest,RoutingFunctionTest`
 Expected: BUILD FAILURE with compilation errors: cannot find symbol `RoutingRules` / `Routed` / `RoutingFunction`.
 
 - [ ] **Step 3: Write the implementation**
@@ -1303,12 +1300,12 @@ final class RoutingFunction<T, R> extends KeyedProcessFunction<String, Change<T>
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=RoutingRulesTest,RoutingFunctionTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=RoutingRulesTest,RoutingFunctionTest`
 Expected: exit 0, no test failures.
 
 - [ ] **Step 5: Run the whole suite**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml clean verify`
+Run: `mvn -q -s <settings.xml> clean verify`
 Expected: exit 0.
 
 - [ ] **Step 6: Commit**
@@ -1389,7 +1386,7 @@ class OptionsTest {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=OptionsTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=OptionsTest`
 Expected: BUILD FAILURE with compilation errors: cannot find symbol `NestOptions` / `ChildOptions` / `LookupOptions`.
 
 - [ ] **Step 3: Write the implementation**
@@ -1578,12 +1575,12 @@ public final class LookupOptions implements Serializable {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=OptionsTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=OptionsTest`
 Expected: exit 0, no test failures.
 
 - [ ] **Step 5: Run the whole suite**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml clean verify`
+Run: `mvn -q -s <settings.xml> clean verify`
 Expected: exit 0.
 
 - [ ] **Step 6: Commit**
@@ -1865,7 +1862,7 @@ class NestRulesTest {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=NestRulesTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=NestRulesTest`
 Expected: BUILD FAILURE with compilation errors: cannot find symbol `NestRules` / `ChildSlot` / `SlotChange`.
 
 - [ ] **Step 3: Write the implementation**
@@ -2068,12 +2065,12 @@ final class NestRules<P, O> implements Serializable {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=NestRulesTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=NestRulesTest`
 Expected: exit 0, no test failures.
 
 - [ ] **Step 5: Run the whole suite**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml clean verify`
+Run: `mvn -q -s <settings.xml> clean verify`
 Expected: exit 0.
 
 - [ ] **Step 6: Commit**
@@ -2147,7 +2144,7 @@ class SlotChangeSerializerTest extends SerializerTestBase<SlotChange> {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=SlotChangeSerializerTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=SlotChangeSerializerTest`
 Expected: BUILD FAILURE with compilation error: cannot find symbol `SlotChangeSerializer`.
 
 - [ ] **Step 3: Write the implementation**
@@ -2366,12 +2363,12 @@ final class SlotChangeTypeInfo extends TypeInformation<SlotChange> {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=SlotChangeSerializerTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=SlotChangeSerializerTest`
 Expected: exit 0, no test failures.
 
 - [ ] **Step 5: Run the whole suite**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml clean verify`
+Run: `mvn -q -s <settings.xml> clean verify`
 Expected: exit 0.
 
 - [ ] **Step 6: Commit**
@@ -2583,7 +2580,7 @@ class NestFunctionTest {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=NestFunctionTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=NestFunctionTest`
 Expected: BUILD FAILURE with compilation errors: cannot find symbol `NestFunction` / `SlotSpec` / `SlotParentKey` / `ChangeId`.
 
 - [ ] **Step 3: Write the implementation**
@@ -2826,12 +2823,12 @@ final class ChangeId<T> implements KeySelector<Change<T>, String> {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=NestFunctionTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=NestFunctionTest`
 Expected: exit 0, no test failures.
 
 - [ ] **Step 5: Run the whole suite**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml clean verify`
+Run: `mvn -q -s <settings.xml> clean verify`
 Expected: exit 0.
 
 - [ ] **Step 6: Commit**
@@ -2965,7 +2962,7 @@ class NestTest {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=NestTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=NestTest`
 Expected: BUILD FAILURE with compilation errors: cannot find symbol `Nest` / `SlotTagger`.
 
 - [ ] **Step 3: Write the implementation**
@@ -3127,12 +3124,12 @@ public final class Nest<P> {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=NestTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=NestTest`
 Expected: exit 0, no test failures.
 
 - [ ] **Step 5: Run the whole suite**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml clean verify`
+Run: `mvn -q -s <settings.xml> clean verify`
 Expected: exit 0.
 
 - [ ] **Step 6: Commit**
@@ -3392,7 +3389,7 @@ class LookupEntitySerializerTest extends SerializerTestBase<LookupEntity<String>
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=LookupRulesTest,LookupEntitySerializerTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=LookupRulesTest,LookupEntitySerializerTest`
 Expected: BUILD FAILURE with compilation errors: cannot find symbol `LookupRules` / `LookupEntity` / `LookupEntitySerializer`.
 
 - [ ] **Step 3: Write the implementation**
@@ -3710,12 +3707,12 @@ final class LookupEntityTypeInfo<E> extends TypeInformation<LookupEntity<E>> {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=LookupRulesTest,LookupEntitySerializerTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=LookupRulesTest,LookupEntitySerializerTest`
 Expected: exit 0, no test failures.
 
 - [ ] **Step 5: Run the whole suite**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml clean verify`
+Run: `mvn -q -s <settings.xml> clean verify`
 Expected: exit 0.
 
 - [ ] **Step 6: Commit**
@@ -3929,7 +3926,7 @@ class KeySelectorsTest {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=LookupFunctionTest,LookupTest,KeySelectorsTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=LookupFunctionTest,LookupTest,KeySelectorsTest`
 Expected: BUILD FAILURE with compilation errors: cannot find symbol `LookupFunction` / `LookupEntityKey` / `Lookup`.
 
 - [ ] **Step 3: Write the implementation**
@@ -4175,12 +4172,12 @@ public final class Lookup<E> {
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=LookupFunctionTest,LookupTest,KeySelectorsTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=LookupFunctionTest,LookupTest,KeySelectorsTest`
 Expected: exit 0, no test failures.
 
 - [ ] **Step 5: Run the whole suite**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml clean verify`
+Run: `mvn -q -s <settings.xml> clean verify`
 Expected: exit 0.
 
 - [ ] **Step 6: Commit**
@@ -4334,12 +4331,12 @@ class ResumeProjectionPipelineTest {
 
 - [ ] **Step 2: Run the tests to verify they pass**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml test -Dtest=ResumeProjectionPipelineTest`
+Run: `mvn -q -s <settings.xml> test -Dtest=ResumeProjectionPipelineTest`
 Expected: exit 0, no test failures.
 
 - [ ] **Step 3: Run the whole suite**
 
-Run: `mvn -q -s /private/tmp/claude-501/-Users-mannkostir-Documents-flink-use-cases-framework/3f51feaa-f321-4669-aad0-9b002a5b11e0/scratchpad/settings.xml clean verify`
+Run: `mvn -q -s <settings.xml> clean verify`
 Expected: exit 0.
 
 - [ ] **Step 4: Commit**
