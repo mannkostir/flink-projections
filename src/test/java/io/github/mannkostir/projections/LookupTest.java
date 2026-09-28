@@ -37,6 +37,19 @@ class LookupTest {
     }
 
     @Test
+    void rejectsSecondEnrich() {
+        StreamExecutionEnvironment env = ChangesTest.environment();
+        Lookup.WithDimension<String, String> withDimension = Lookup
+                .of("company", NestTest.changes(env, new Upsert<>("e1", "dev@k1")), LookupTest::companyOf, Types.STRING)
+                .from(NestTest.changes(env, new Upsert<>("k1", "acme")), Types.STRING);
+        withDimension.enrich((entity, company) -> entity, Types.STRING);
+
+        assertThatThrownBy(() -> withDimension.enrich((entity, company) -> entity, Types.STRING))
+                .isInstanceOf(ProjectionConfigurationException.class)
+                .hasMessageContaining("already enriched");
+    }
+
+    @Test
     void rejectsInvalidName() {
         StreamExecutionEnvironment env = ChangesTest.environment();
 
