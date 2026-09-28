@@ -49,11 +49,7 @@ public final class LookupOptions implements Serializable {
         }
 
         public LookupOptions build() {
-            return new LookupOptions(validated(stateTtlSet, stateTtl, "stateTtl"), requireMatch);
-        }
-
-        private static Duration validated(boolean set, Duration duration, String option) {
-            return set ? Durations.requirePositive(duration, option) : null;
+            return new LookupOptions(Durations.requirePositiveIfSet(stateTtlSet, stateTtl, "stateTtl"), requireMatch);
         }
     }
 }
