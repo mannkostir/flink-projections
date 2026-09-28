@@ -60,6 +60,9 @@ KafkaChanges.to(
 
 - Input records are soft deletes: a record whose flag is set becomes a `Delete` carrying that record as the entity's last value. A null-value tombstone on an input topic fails the job with `TombstoneNotSupportedException`.
 - Output records are keyed by document id (UTF-8). An upsert writes the document; a delete writes a tombstone, so a compacted topic keeps one record per live document.
+- Each document's upserts and tombstones keep their order when the sink is fed directly by the operator that emits the documents. Do not rebalance or change parallelism between them.
+- With `DeliveryGuarantee.EXACTLY_ONCE`, set `property("transaction.timeout.ms", …)` no higher than the broker's `transaction.max.timeout.ms` (15 minutes by default); the connector's own default is one hour.
+- `flink-connector-base` ships with the Flink distribution; when you run a job from an IDE or a test, put it on the classpath yourself.
 - Operator ids are `kafka_source_<name>`, then `changes_<name>`, and `kafka_sink_<name>`.
 - Sources emit no watermarks. The library never creates topics or checks that they exist; a missing topic fails when the job runs.
 
