@@ -2,7 +2,6 @@ package io.github.mannkostir.projections.examples.resume;
 
 import java.util.List;
 
-import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 
