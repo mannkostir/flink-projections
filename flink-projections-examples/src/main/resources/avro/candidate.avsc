@@ -1,0 +1,5 @@
+{"type": "record", "name": "Candidate", "namespace": "io.github.mannkostir.projections.examples.resume", "fields": [
+  {"name": "id", "type": "string"},
+  {"name": "name", "type": "string"},
+  {"name": "deleted", "type": "boolean", "default": false}
+]}

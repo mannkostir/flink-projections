@@ -1,0 +1,6 @@
+{"type": "record", "name": "Project", "namespace": "io.github.mannkostir.projections.examples.resume", "fields": [
+  {"name": "id", "type": "string"},
+  {"name": "experienceId", "type": "string"},
+  {"name": "name", "type": "string"},
+  {"name": "deleted", "type": "boolean", "default": false}
+]}

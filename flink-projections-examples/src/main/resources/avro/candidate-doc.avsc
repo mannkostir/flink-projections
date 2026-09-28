@@ -1,0 +1,12 @@
+{"type": "record", "name": "CandidateDoc", "namespace": "io.github.mannkostir.projections.examples.resume", "fields": [
+  {"name": "id", "type": "string"},
+  {"name": "name", "type": "string"},
+  {"name": "experiences", "type": {"type": "array", "items": {"type": "record", "name": "ExperienceDoc", "fields": [
+    {"name": "id", "type": "string"},
+    {"name": "candidateId", "type": "string"},
+    {"name": "title", "type": "string"},
+    {"name": "companyName", "type": ["null", "string"], "default": null},
+    {"name": "projects", "type": {"type": "array", "items": "string"}}
+  ]}}},
+  {"name": "skills", "type": {"type": "array", "items": "string"}}
+]}
