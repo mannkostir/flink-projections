@@ -124,6 +124,20 @@ class LookupRulesTest {
     }
 
     @Test
+    void requireMatchRelocationToUnmatchedKeyEmitsNothing() throws Exception {
+        innerJoin().onDimension(new Upsert<>("k1", "acme"), state, out::add);
+        innerJoin().onEntity(entity(new Upsert<>("e1", "dev")), state, out::add);
+        out.clear();
+
+        innerJoin().onEntity(new LookupEntity<>(new Delete<>("e1", "dev"), true), state, out::add);
+
+        InMemoryLookupState<String, String> newKeyState = new InMemoryLookupState<>();
+        innerJoin().onEntity(entity(new Upsert<>("e1", "dev2")), newKeyState, out::add);
+
+        assertThat(out).isEmpty();
+    }
+
+    @Test
     void enricherFailurePropagates() {
         LookupRules<String, String, String> failing = new LookupRules<>((entity, dimension) -> {
             throw new IllegalStateException("broken enricher");
