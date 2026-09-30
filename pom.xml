@@ -21,6 +21,7 @@
   <modules>
     <module>flink-projections</module>
     <module>flink-projections-kafka</module>
+    <module>flink-projections-elasticsearch</module>
     <module>flink-projections-examples</module>
   </modules>
 
@@ -30,9 +31,11 @@
 
     <flink.version>2.2.1</flink.version>
     <flink-connector-kafka.version>5.0.0-2.2</flink-connector-kafka.version>
+    <elasticsearch-java.version>8.19.22</elasticsearch-java.version>
 
     <junit.version>5.14.4</junit.version>
     <assertj.version>3.27.7</assertj.version>
+    <testcontainers.version>2.0.5</testcontainers.version>
 
     <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
     <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
@@ -58,6 +61,23 @@
         <groupId>io.github.mannkostir</groupId>
         <artifactId>flink-projections-kafka</artifactId>
         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.github.mannkostir</groupId>
+        <artifactId>flink-projections-elasticsearch</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>co.elastic.clients</groupId>
+        <artifactId>elasticsearch-java</artifactId>
+        <version>${elasticsearch-java.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>${testcontainers.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>org.junit</groupId>
