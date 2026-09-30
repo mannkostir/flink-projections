@@ -17,11 +17,17 @@ class ElasticsearchBulkClientTest {
     private static final List<PendingOperation> ONE_DELETE = List.of(new DeleteOperation("a"));
 
     private HttpServer server;
+    private volatile String lastQuery;
 
     private BulkClient clientOfServerAnswering(int status) throws IOException {
+        return clientOfServerAnswering(status, "{\"error\":\"unavailable\"}");
+    }
+
+    private BulkClient clientOfServerAnswering(int status, String responseBody) throws IOException {
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/", exchange -> {
-            byte[] body = "{\"error\":\"unavailable\"}".getBytes(StandardCharsets.UTF_8);
+            lastQuery = exchange.getRequestURI().getRawQuery();
+            byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().add("Content-Type", "application/json");
             exchange.getResponseHeaders().add("X-Elastic-Product", "Elasticsearch");
             exchange.sendResponseHeaders(status, body.length);
@@ -54,6 +60,15 @@ class ElasticsearchBulkClientTest {
         try (BulkClient client = clientOfServerAnswering(503)) {
             assertThat(client.send(ONE_DELETE)).isInstanceOfSatisfying(RequestFailure.class,
                     failure -> assertThat(failure.status()).hasValue(503));
+        }
+    }
+
+    @Test
+    void bulkAsksElasticsearchToGiveUpBeforeTheClientDoes() throws IOException {
+        try (BulkClient client = clientOfServerAnswering(200, "{\"took\":1,\"errors\":false,\"items\":[]}")) {
+            client.send(ONE_DELETE);
+
+            assertThat(lastQuery).contains("timeout=20s");
         }
     }
 }
