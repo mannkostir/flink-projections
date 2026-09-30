@@ -1,8 +1,8 @@
 package io.github.mannkostir.projections.examples.resume;
 
 import java.time.Duration;
+import java.util.function.Supplier;
 
-import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.PipelineOptions;
 import org.apache.flink.core.execution.JobClient;
@@ -15,13 +15,13 @@ final class ResumeSearchRun {
     private ResumeSearchRun() {
     }
 
-    static void assertConverges(ResumeSearchConfig config, ScenarioWriters writers, DeserializationSchema<CandidateDoc> reader) throws Exception {
+    static void assertConverges(ResumeSearchConfig config, ScenarioWriters writers, Supplier<DocumentView> documents) throws Exception {
         ResumeScenario scenario = new ResumeScenario(config.bootstrapServers(), config.topics());
         scenario.createTopics();
         scenario.produce(writers);
         JobClient job = start(config);
-        try (OutputTopic output = new OutputTopic(config.bootstrapServers(), config.topics().documents(), reader)) {
-            Awaitility.await().atMost(CONVERGENCE_TIMEOUT).untilAsserted(() -> ExpectedDocuments.assertConverged(output.latestByKey()));
+        try (DocumentView view = documents.get()) {
+            Awaitility.await().atMost(CONVERGENCE_TIMEOUT).untilAsserted(() -> ExpectedDocuments.assertConverged(view.latestById()));
         } finally {
             job.cancel().get();
         }

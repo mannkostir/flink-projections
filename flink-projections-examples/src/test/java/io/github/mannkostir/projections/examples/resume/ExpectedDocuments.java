@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 
 final class ExpectedDocuments {
+    static final List<String> IDS = List.of("c1", "c2", "c3");
+
     private ExpectedDocuments() {
     }
 

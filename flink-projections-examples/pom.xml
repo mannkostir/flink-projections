@@ -62,8 +62,16 @@
       <artifactId>flink-projections-kafka</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.github.mannkostir</groupId>
+      <artifactId>flink-projections-elasticsearch</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-kafka</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>co.elastic.clients</groupId>
+      <artifactId>elasticsearch-java</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
@@ -112,6 +120,11 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers-kafka</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-elasticsearch</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

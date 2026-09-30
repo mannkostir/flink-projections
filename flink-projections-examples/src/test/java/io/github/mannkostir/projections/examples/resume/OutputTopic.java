@@ -16,7 +16,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 
-final class OutputTopic implements AutoCloseable {
+final class OutputTopic implements DocumentView {
     private final KafkaConsumer<byte[], byte[]> consumer;
     private final DeserializationSchema<CandidateDoc> reader;
     private final Map<String, Optional<CandidateDoc>> latest = new HashMap<>();
@@ -27,7 +27,8 @@ final class OutputTopic implements AutoCloseable {
         this.reader = reader;
     }
 
-    Map<String, Optional<CandidateDoc>> latestByKey() {
+    @Override
+    public Map<String, Optional<CandidateDoc>> latestById() {
         consumer.poll(Duration.ofMillis(500)).forEach(this::remember);
         return Map.copyOf(latest);
     }
