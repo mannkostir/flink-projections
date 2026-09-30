@@ -1,0 +1,70 @@
+name: release
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Build, sign and bundle 0.0.0-dryrun without uploading
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+      CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+      MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Resolve version
+        id: version
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          DRY_RUN: ${{ inputs.dry-run }}
+        run: .github/scripts/release-version.sh "$REF_TYPE" "$REF_NAME" "$DRY_RUN" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_TOKEN
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Set version
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: mvn -B org.codehaus.mojo:versions-maven-plugin:2.22.0:set -DnewVersion="$VERSION" -DgenerateBackupPoms=false
+
+      - name: Publish to the Central Portal
+        if: steps.version.outputs.publish == 'true'
+        run: mvn -B deploy -P release,integration-tests
+
+      - name: Test and sign
+        if: steps.version.outputs.publish == 'false'
+        run: mvn -B verify -P release,integration-tests
+
+      - name: Bundle without uploading
+        if: steps.version.outputs.publish == 'false'
+        env:
+          UNREACHABLE_CENTRAL: http://127.0.0.1:9
+        run: mvn -B deploy -P release -DskipTests -DcentralBaseUrl="$UNREACHABLE_CENTRAL" || true
+
+      - name: Check bundle
+        if: steps.version.outputs.publish == 'false'
+        run: .github/scripts/check-bundle.sh target/central-publishing/central-bundle.zip
