@@ -17,7 +17,7 @@ public record ElasticsearchResumeOutput(List<String> hosts, String index) implem
     }
 
     @Override
-    public void write(DataStream<Change<CandidateDoc>> documents, ResumeSearchConfig config) {
+    public void write(DataStream<Change<CandidateDoc>> documents) {
         ElasticsearchSinkOptions options = ElasticsearchSinkOptions.builder()
                 .hosts(hosts.toArray(String[]::new))
                 .index(index)

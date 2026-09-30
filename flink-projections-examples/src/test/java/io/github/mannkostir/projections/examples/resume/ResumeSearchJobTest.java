@@ -15,7 +15,7 @@ class ResumeSearchJobTest {
     void wiresStableOperatorUids() {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        ResumeSearchJob.wire(env, new ResumeSearchConfig("localhost:9092", new JsonResumeFormat(), ResumeTopics.defaults(), new KafkaResumeOutput()));
+        ResumeSearchJob.wire(env, new ResumeSearchConfig("localhost:9092", new JsonResumeFormat(), ResumeTopics.defaults(), KafkaResumeOutput.of("localhost:9092", ResumeTopics.defaults(), new JsonResumeFormat())));
 
         assertThat(uids(env.getTransformations())).contains(
                 "kafka_source_candidates", "changes_candidates",

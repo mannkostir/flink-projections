@@ -11,19 +11,22 @@ public record ResumeSearchConfig(String bootstrapServers, ResumeFormat format, R
             "json", parameters -> new JsonResumeFormat(),
             "avro", parameters -> new AvroResumeFormat(required(parameters, "schema-registry-url", "--format avro")));
 
-    private static final Map<String, Function<ParameterTool, ResumeOutput>> OUTPUTS = Map.of(
-            "kafka", parameters -> new KafkaResumeOutput(),
-            "elasticsearch", parameters -> new ElasticsearchResumeOutput(
-                    Arrays.asList(required(parameters, "elasticsearch-hosts", "--output elasticsearch").split(",")),
-                    parameters.get("elasticsearch-index", ElasticsearchResumeOutput.DEFAULT_INDEX)));
+    private record OutputInputs(ParameterTool parameters, String bootstrapServers, ResumeFormat format, ResumeTopics topics) {
+    }
+
+    private static final Map<String, Function<OutputInputs, ResumeOutput>> OUTPUTS = Map.of(
+            "kafka", inputs -> KafkaResumeOutput.of(inputs.bootstrapServers(), inputs.topics(), inputs.format()),
+            "elasticsearch", inputs -> new ElasticsearchResumeOutput(
+                    Arrays.asList(required(inputs.parameters(), "elasticsearch-hosts", "--output elasticsearch").split(",")),
+                    inputs.parameters().get("elasticsearch-index", ElasticsearchResumeOutput.DEFAULT_INDEX)));
 
     public static ResumeSearchConfig parse(String[] args) {
         ParameterTool parameters = ParameterTool.fromArgs(args);
-        return new ResumeSearchConfig(
-                required(parameters, "bootstrap-servers", "the job"),
-                format(parameters),
-                ResumeTopics.defaults(),
-                output(parameters));
+        String bootstrapServers = required(parameters, "bootstrap-servers", "the job");
+        ResumeFormat format = format(parameters);
+        ResumeTopics topics = ResumeTopics.defaults();
+        ResumeOutput output = output(new OutputInputs(parameters, bootstrapServers, format, topics));
+        return new ResumeSearchConfig(bootstrapServers, format, topics, output);
     }
 
     private static ResumeFormat format(ParameterTool parameters) {
@@ -35,13 +38,13 @@ public record ResumeSearchConfig(String bootstrapServers, ResumeFormat format, R
         return format.apply(parameters);
     }
 
-    private static ResumeOutput output(ParameterTool parameters) {
-        String name = parameters.get("output", "kafka");
-        Function<ParameterTool, ResumeOutput> output = OUTPUTS.get(name);
+    private static ResumeOutput output(OutputInputs inputs) {
+        String name = inputs.parameters().get("output", "kafka");
+        Function<OutputInputs, ResumeOutput> output = OUTPUTS.get(name);
         if (output == null) {
             throw new ResumeSearchConfigException("--output '" + name + "' is not supported: use --output kafka or --output elasticsearch");
         }
-        return output.apply(parameters);
+        return output.apply(inputs);
     }
 
     private static String required(ParameterTool parameters, String key, String requiredBy) {

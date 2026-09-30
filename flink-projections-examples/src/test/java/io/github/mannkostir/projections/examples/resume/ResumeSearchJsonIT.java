@@ -18,7 +18,7 @@ class ResumeSearchJsonIT {
 
     @Test
     void projectsKafkaTopicsIntoCandidateDocuments() throws Exception {
-        ResumeSearchConfig config = new ResumeSearchConfig(KAFKA.getBootstrapServers(), new JsonResumeFormat(), ResumeTopics.defaults(), new KafkaResumeOutput());
+        ResumeSearchConfig config = new ResumeSearchConfig(KAFKA.getBootstrapServers(), new JsonResumeFormat(), ResumeTopics.defaults(), KafkaResumeOutput.of(KAFKA.getBootstrapServers(), ResumeTopics.defaults(), new JsonResumeFormat()));
         JsonDeserializationSchema<CandidateDoc> reader = new JsonDeserializationSchema<>(ResumeTypes.CANDIDATE_DOC);
         reader.open(null);
 

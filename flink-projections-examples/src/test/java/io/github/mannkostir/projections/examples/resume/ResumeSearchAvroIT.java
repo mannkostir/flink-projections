@@ -37,7 +37,9 @@ class ResumeSearchAvroIT {
     @Test
     void projectsKafkaTopicsIntoCandidateDocuments() throws Exception {
         String registryUrl = "http://" + REGISTRY.getHost() + ":" + REGISTRY.getMappedPort(REGISTRY_PORT);
-        ResumeSearchConfig config = new ResumeSearchConfig(KAFKA.getBootstrapServers(), new AvroResumeFormat(registryUrl), ResumeTopics.defaults(), new KafkaResumeOutput());
+        AvroResumeFormat format = new AvroResumeFormat(registryUrl);
+        ResumeOutput output = KafkaResumeOutput.of(KAFKA.getBootstrapServers(), ResumeTopics.defaults(), format);
+        ResumeSearchConfig config = new ResumeSearchConfig(KAFKA.getBootstrapServers(), format, ResumeTopics.defaults(), output);
         AvroRecordReader<CandidateDoc> reader = new AvroRecordReader<>(
                 ConfluentRegistryAvroDeserializationSchema.forGeneric(AvroSchemas.CANDIDATE_DOC, registryUrl),
                 ResumeAvroRecords::toCandidateDoc,
