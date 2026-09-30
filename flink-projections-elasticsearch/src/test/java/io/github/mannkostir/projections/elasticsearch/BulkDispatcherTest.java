@@ -109,6 +109,16 @@ class BulkDispatcherTest {
     }
 
     @Test
+    void failureForADocumentThatWasNotSentFailsTheJob() {
+        client.thenRespond(failed("z", 429, "t"));
+
+        assertThatThrownBy(() -> dispatcher(3).dispatch(List.of(A)))
+                .isInstanceOf(ElasticsearchWriteException.class)
+                .hasMessageContaining("index 'docs'")
+                .hasMessageContaining("document 'z'");
+    }
+
+    @Test
     void transientRequestFailureResendsTheWholeBulk() throws Exception {
         client.thenRespond(RequestFailure.unreachable("Connection refused"));
 
