@@ -13,6 +13,7 @@ public final class Lookup<E> {
     private final KeySelector<E, String> lookupKey;
     private final TypeInformation<E> entityType;
     private LookupOptions options = LookupOptions.defaults();
+    private boolean enriched;
 
     private Lookup(String name, DataStream<Change<E>> entities, KeySelector<E, String> lookupKey, TypeInformation<E> entityType) {
         this.name = name;
@@ -30,21 +31,29 @@ public final class Lookup<E> {
     }
 
     public Lookup<E> withOptions(LookupOptions options) {
+        requireNotEnriched();
         this.options = Objects.requireNonNull(options, "options");
         return this;
     }
 
     public <D> WithDimension<E, D> from(DataStream<Change<D>> dimensions, TypeInformation<D> type) {
+        requireNotEnriched();
         Objects.requireNonNull(dimensions, "dimensions");
         Objects.requireNonNull(type, "type");
         return new WithDimension<>(this, dimensions, type);
+    }
+
+    private void requireNotEnriched() {
+        if (enriched) {
+            throw new ProjectionConfigurationException(
+                    "Lookup '" + name + "' is already enriched: build a new Lookup for another enrichment");
+        }
     }
 
     public static final class WithDimension<E, D> {
         private final Lookup<E> lookup;
         private final DataStream<Change<D>> dimensions;
         private final TypeInformation<D> dimensionType;
-        private boolean enriched;
 
         private WithDimension(Lookup<E> lookup, DataStream<Change<D>> dimensions, TypeInformation<D> dimensionType) {
             this.lookup = lookup;
@@ -53,10 +62,10 @@ public final class Lookup<E> {
         }
 
         public <O> DataStream<Change<O>> enrich(Enricher<E, D, O> enricher, TypeInformation<O> type) {
-            requireNotEnriched();
+            lookup.requireNotEnriched();
             Objects.requireNonNull(enricher, "enricher");
             Objects.requireNonNull(type, "type");
-            enriched = true;
+            lookup.enriched = true;
             String uid = ContractNames.lookupUid(lookup.name);
             return routedEntities()
                     .connect(dimensions)
@@ -65,13 +74,6 @@ public final class Lookup<E> {
                             Changes.typeInfo(type))
                     .uid(uid)
                     .name(uid);
-        }
-
-        private void requireNotEnriched() {
-            if (enriched) {
-                throw new ProjectionConfigurationException(
-                        "Lookup '" + lookup.name + "' is already enriched: build a new Lookup for another enrichment");
-            }
         }
 
         private DataStream<LookupEntity<E>> routedEntities() {

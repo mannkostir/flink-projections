@@ -50,6 +50,43 @@ class LookupTest {
     }
 
     @Test
+    void rejectsEnrichThroughASecondDimensionOfTheSameLookup() {
+        StreamExecutionEnvironment env = ChangesTest.environment();
+        Lookup<String> lookup = Lookup.of("company", NestTest.changes(env, new Upsert<>("e1", "dev@k1")), LookupTest::companyOf, Types.STRING);
+        Lookup.WithDimension<String, String> first = lookup.from(NestTest.changes(env, new Upsert<>("k1", "acme")), Types.STRING);
+        Lookup.WithDimension<String, String> second = lookup.from(NestTest.changes(env, new Upsert<>("k1", "globex")), Types.STRING);
+        first.enrich((entity, company) -> entity, Types.STRING);
+
+        assertThatThrownBy(() -> second.enrich((entity, company) -> entity, Types.STRING))
+                .isInstanceOf(ProjectionConfigurationException.class)
+                .hasMessageContaining("already enriched");
+    }
+
+    @Test
+    void rejectsDimensionAfterEnrich() {
+        StreamExecutionEnvironment env = ChangesTest.environment();
+        Lookup<String> lookup = Lookup.of("company", NestTest.changes(env, new Upsert<>("e1", "dev@k1")), LookupTest::companyOf, Types.STRING);
+        lookup.from(NestTest.changes(env, new Upsert<>("k1", "acme")), Types.STRING).enrich((entity, company) -> entity, Types.STRING);
+        DataStream<Change<String>> dimensions = NestTest.changes(env, new Upsert<>("k1", "globex"));
+
+        assertThatThrownBy(() -> lookup.from(dimensions, Types.STRING))
+                .isInstanceOf(ProjectionConfigurationException.class)
+                .hasMessageContaining("already enriched");
+    }
+
+    @Test
+    void rejectsOptionsAfterEnrich() {
+        StreamExecutionEnvironment env = ChangesTest.environment();
+        Lookup<String> lookup = Lookup.of("company", NestTest.changes(env, new Upsert<>("e1", "dev@k1")), LookupTest::companyOf, Types.STRING);
+        lookup.from(NestTest.changes(env, new Upsert<>("k1", "acme")), Types.STRING).enrich((entity, company) -> entity, Types.STRING);
+        LookupOptions options = LookupOptions.builder().requireMatch(true).build();
+
+        assertThatThrownBy(() -> lookup.withOptions(options))
+                .isInstanceOf(ProjectionConfigurationException.class)
+                .hasMessageContaining("already enriched");
+    }
+
+    @Test
     void rejectsInvalidName() {
         StreamExecutionEnvironment env = ChangesTest.environment();
 
