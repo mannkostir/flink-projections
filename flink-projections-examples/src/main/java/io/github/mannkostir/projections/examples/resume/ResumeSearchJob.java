@@ -37,7 +37,7 @@ public final class ResumeSearchJob {
                 KafkaChanges.from("projects", env, source(config, topics.projects()), format.projects(),
                         Project::id, DeleteDetection.flag(Project::deleted), ResumeTypes.PROJECT));
         DataStream<Change<CandidateDoc>> documents = ResumeProjection.assemble(inputs);
-        config.output().write(documents, config);
+        config.output().write(documents);
     }
 
     private static KafkaSourceOptions source(ResumeSearchConfig config, String topic) {
