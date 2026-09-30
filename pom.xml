@@ -12,6 +12,22 @@
   <description>Stateful Flink projections of entity streams into documents: joins, grouping and deletes, with state you control.</description>
   <url>https://github.com/mannkostir/flink-projections</url>
 
+  <licenses>
+    <license>
+      <name>Apache-2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>mannkostir</id>
+      <name>Artem Gabatov</name>
+      <url>https://github.com/mannkostir</url>
+    </developer>
+  </developers>
+
   <scm>
     <url>https://github.com/mannkostir/flink-projections</url>
     <connection>scm:git:https://github.com/mannkostir/flink-projections.git</connection>
@@ -162,6 +178,7 @@
           <configuration>
             <doclint>none</doclint>
             <quiet>true</quiet>
+            <failOnError>false</failOnError>
           </configuration>
           <executions>
             <execution>
