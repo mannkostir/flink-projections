@@ -15,7 +15,7 @@ class ResumeSearchJobTest {
     void wiresStableOperatorUids() {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        ResumeSearchJob.wire(env, new ResumeSearchConfig("localhost:9092", new JsonResumeFormat(), ResumeTopics.defaults()));
+        ResumeSearchJob.wire(env, new ResumeSearchConfig("localhost:9092", new JsonResumeFormat(), ResumeTopics.defaults(), new KafkaResumeOutput()));
 
         assertThat(uids(env.getTransformations())).contains(
                 "kafka_source_candidates", "changes_candidates",
@@ -27,6 +27,16 @@ class ResumeSearchJobTest {
                 "nest_experience", "nest_experience_route_projects",
                 "nest_candidate", "nest_candidate_route_experiences", "nest_candidate_route_skills",
                 "kafka_sink_candidate-docs");
+    }
+
+    @Test
+    void wiresTheElasticsearchSinkWhenSelected() {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        ResumeOutput output = new ElasticsearchResumeOutput(List.of("http://localhost:9200"), "candidate-docs");
+
+        ResumeSearchJob.wire(env, new ResumeSearchConfig("localhost:9092", new JsonResumeFormat(), ResumeTopics.defaults(), output));
+
+        assertThat(uids(env.getTransformations())).contains("elasticsearch_sink_candidate-docs").doesNotContain("kafka_sink_candidate-docs");
     }
 
     private static List<String> uids(Collection<Transformation<?>> roots) {

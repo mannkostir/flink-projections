@@ -6,7 +6,6 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import io.github.mannkostir.projections.Change;
 import io.github.mannkostir.projections.kafka.DeleteDetection;
 import io.github.mannkostir.projections.kafka.KafkaChanges;
-import io.github.mannkostir.projections.kafka.KafkaSinkOptions;
 import io.github.mannkostir.projections.kafka.KafkaSourceOptions;
 
 public final class ResumeSearchJob {
@@ -38,7 +37,7 @@ public final class ResumeSearchJob {
                 KafkaChanges.from("projects", env, source(config, topics.projects()), format.projects(),
                         Project::id, DeleteDetection.flag(Project::deleted), ResumeTypes.PROJECT));
         DataStream<Change<CandidateDoc>> documents = ResumeProjection.assemble(inputs);
-        KafkaChanges.to("candidate-docs", documents, sink(config, topics.documents()), format.documents(topics.documents()));
+        config.output().write(documents, config);
     }
 
     private static KafkaSourceOptions source(ResumeSearchConfig config, String topic) {
@@ -46,13 +45,6 @@ public final class ResumeSearchJob {
                 .bootstrapServers(config.bootstrapServers())
                 .topic(topic)
                 .groupId(GROUP_ID)
-                .build();
-    }
-
-    private static KafkaSinkOptions sink(ResumeSearchConfig config, String topic) {
-        return KafkaSinkOptions.builder()
-                .bootstrapServers(config.bootstrapServers())
-                .topic(topic)
                 .build();
     }
 }
