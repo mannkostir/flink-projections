@@ -1,6 +1,7 @@
 package io.github.mannkostir.projections.elasticsearch;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
@@ -75,6 +76,8 @@ abstract class ElasticsearchSinkContract {
 
     @Test
     void upsertThenDeleteInOneBatchLeavesNoDocument() throws Exception {
+        probe.createIndex(index, "{}");
+
         run(List.of(new Upsert<>("a", "{}"), new Delete<>("a", "{}")));
 
         assertThat(probe.source(index, "a")).isEmpty();
@@ -105,6 +108,12 @@ abstract class ElasticsearchSinkContract {
         run(List.<Change<String>>of(new Delete<>("never-indexed", "{}")));
 
         assertThat(probe.source(index, "never-indexed")).isEmpty();
+    }
+
+    @Test
+    void deleteIntoAMissingIndexSucceeds() {
+        assertThatCode(() -> run(List.<Change<String>>of(new Upsert<>("a", "{}"), new Delete<>("a", "{}"))))
+                .doesNotThrowAnyException();
     }
 
     @Test
