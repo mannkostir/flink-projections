@@ -27,6 +27,18 @@ SQL can express the same joins, but it owns the state. A query change or a Flink
 | `flink-projections-elasticsearch` | Documents into an Elasticsearch 8 or 9 index: index and delete by document id |
 | `flink-projections-examples` | A runnable resume-search job; not published |
 
+## Installation
+
+```xml
+<dependency>
+    <groupId>io.github.mannkostir</groupId>
+    <artifactId>flink-projections</artifactId>
+    <version>0.1.0</version>
+</dependency>
+```
+
+Add `flink-projections-kafka` or `flink-projections-elasticsearch`, at the same version, for the adapters. Flink 2.2.1 is the only version tested so far. Java 17 or later.
+
 ## Dependencies
 
 Flink is `provided`: your job owns its version. Nothing is shaded or bundled.
@@ -34,6 +46,59 @@ Flink is `provided`: your job owns its version. Nothing is shaded or bundled.
 `flink-projections-kafka` also treats `flink-connector-kafka` as `provided`. Declare it in your job, at the build that matches your Flink version (`5.0.0-2.2` for Flink 2.2). The module has no Avro, Schema Registry or JSON dependency; you pass Flink's own `DeserializationSchema` and `SerializationSchema`.
 
 `flink-projections-elasticsearch` treats `co.elastic.clients:elasticsearch-java` as `provided`. Declare an 8.19.x client in your job; it talks to Elasticsearch 8 and, through REST compatibility headers, to Elasticsearch 9. It is tested with client 8.19.22 against Elasticsearch 8.19.22 and 9.5.3. The module has no Jackson dependency: documents are the bytes your `SerializationSchema` produces, sent as they are.
+
+## Core
+
+```java
+DataStream<Change<Experience>> experiences = Changes.from(
+        "experiences", experienceRows, Experience::id, Experience::deleted, EXPERIENCE);
+
+DataStream<Change<Experience>> withCompany = Lookup.of("company", experiences, Experience::companyId, EXPERIENCE)
+        .from(companies, COMPANY)
+        .enrich((experience, company) -> experience.withCompanyName(company == null ? null : company.name()), EXPERIENCE);
+
+Nest<Experience> experienceLevel = Nest.parent("experience", withCompany, EXPERIENCE);
+ChildSlot<Project> projectSlot = experienceLevel.child("projects", projects, Project::experienceId, PROJECT);
+DataStream<Change<ExperienceDoc>> experienceDocs = experienceLevel.assemble(
+        (experience, children) -> new ExperienceDoc(
+                experience.id(),
+                experience.candidateId(),
+                experience.title(),
+                experience.companyName(),
+                children.get(projectSlot).stream().map(Project::name).toList()),
+        EXPERIENCE_DOC);
+
+Nest<Candidate> candidateLevel = Nest.parent("candidate", candidates, CANDIDATE)
+        .withOptions(NestOptions.builder().orphanTimeout(Duration.ofHours(1)).build());
+ChildSlot<ExperienceDoc> experienceSlot = candidateLevel.child("experiences", experienceDocs, ExperienceDoc::candidateId, EXPERIENCE_DOC);
+ChildSlot<Skill> skillSlot = candidateLevel.child("skills", skills, Skill::candidateId, SKILL);
+DataStream<Change<CandidateDoc>> documents = candidateLevel.assemble(
+        (candidate, children) -> new CandidateDoc(
+                candidate.id(),
+                candidate.name(),
+                children.get(experienceSlot),
+                children.get(skillSlot).stream().map(Skill::name).toList()),
+        CANDIDATE_DOC);
+```
+
+- `Changes.from` turns a stream into `Upsert`s and `Delete`s by id; a `Delete` carries the entity's last value.
+- `Lookup` attaches one dimension to every entity whose lookup key matches, and re-emits those entities when the dimension changes. One `Lookup` enriches once.
+- `Nest` keys a parent and its child slots by parent id and emits one assembled document per parent. Levels chain bottom-up: one level's documents are the next level's children.
+- Deleting a child re-emits its parent's document without it; deleting a parent emits a `Delete` of its document.
+- When an entity's parent key or lookup key changes, it is removed from the old key and added under the new one. A `Delete` is routed by the entity's stored last value, so it reaches the key the entity is actually stored under.
+- Changes for one entity must arrive in order, as they do from a source partitioned by entity id. Documents converge; there is no ordering across entities.
+- State TTL is refreshed on create and write, so a parent or dimension that rarely changes can expire while its children stay active.
+- With `requireMatch(true)`, an entity that moves from a key with a dimension to a key without one keeps its last enriched value downstream until that key gets a dimension or the entity changes again.
+
+| Option | Default |
+|---|---|
+| `NestOptions.parentStateTtl` | none: parent and last-document state live until the parent is deleted |
+| `NestOptions.orphanTimeout` | none: children whose parent never arrives are kept; when set, they are cleared once the timeout passes in processing time without a parent |
+| `ChildOptions.stateTtl` | none: applies to the slot's child state and its routing state |
+| `LookupOptions.stateTtl` | none: applies to entity, dimension and routing state together |
+| `LookupOptions.requireMatch` | `false`: an entity without a dimension is emitted with `null` as the dimension; `true` emits nothing until a dimension exists and deletes enriched entities when it is removed |
+
+Names given to `Changes`, `Nest`, child slots and `Lookup` must be lowercase letters, digits and `-`, starting with a letter.
 
 ## Kafka
 
@@ -67,6 +132,7 @@ KafkaChanges.to(
 - With `DeliveryGuarantee.EXACTLY_ONCE`, set `property("transaction.timeout.ms", …)` no higher than the broker's `transaction.max.timeout.ms` (15 minutes by default); the connector's own default is one hour.
 - `flink-connector-base` ships with the Flink distribution; when you run a job from an IDE or a test, put it on the classpath yourself.
 - Operator ids are `kafka_source_<name>`, then `changes_<name>`, and `kafka_sink_<name>`.
+- `KafkaChanges.to` and `ElasticsearchChanges.to` return the `DataStreamSink`, so you can set its parallelism or slot sharing group. Keep its uid.
 - Sources emit no watermarks. The library never creates topics or checks that they exist; a missing topic fails when the job runs.
 
 | Option | Default |
@@ -120,8 +186,39 @@ ElasticsearchChanges.to(
 | `maxRetries` | `8` |
 | `retryBackoff` | `Duration.ofMillis(100)` doubling to `Duration.ofSeconds(10)` |
 
+## Compatibility contract
+
+Operator uids and state names come only from the names you give, never from class names. They are how a savepoint finds its state, and they change only in a major version. Renaming one of your names, not upgrading the library, is what breaks a savepoint.
+
+| Operator uid | Created by |
+|---|---|
+| `changes_<name>` | `Changes.from`, and `KafkaChanges.from` after its source |
+| `nest_<name>` | `Nest.assemble` |
+| `nest_<name>_route_<slot>` | each `Nest.child` slot |
+| `lookup_<name>` | `Lookup…enrich` |
+| `lookup_<name>_route` | `Lookup…enrich`, routing the entities |
+| `kafka_source_<name>` | `KafkaChanges.from` |
+| `kafka_sink_<name>` | `KafkaChanges.to` |
+| `elasticsearch_sink_<name>` | `ElasticsearchChanges.to` |
+
+| State name | Holds |
+|---|---|
+| `<name>.parent` | a `Nest` level's parent value |
+| `<name>.child.<slot>` | a `Nest` level's children in one slot |
+| `<name>.last-doc` | a `Nest` level's last emitted document |
+| `<name>.route.<slot>.last` | the last value of each child, for relocation |
+| `<name>.entities` | a `Lookup`'s entities under one key |
+| `<name>.dimension` | a `Lookup`'s dimension under one key |
+| `<name>.route.last` | the last value of each `Lookup` entity, for relocation |
+
+The Kafka source keeps its offsets in the connector's own state under `kafka_source_<name>`. The Kafka sink's state, used only with `EXACTLY_ONCE`, lives under `kafka_sink_<name>`. The Elasticsearch sink has no writer state.
+
 ## Example
 
 `flink-projections-examples` runs the resume-search projection: candidates, experiences, projects, skills and companies from five topics, joined with `Lookup` and two `Nest` levels, into one document per candidate on `resume.candidate-docs`.
 
 `ResumeSearchJob.main` takes `--bootstrap-servers`, `--format json|avro` (default `json`) and, for Avro, `--schema-registry-url`. `--output kafka|elasticsearch` (default `kafka`) picks where documents go: the `resume.candidate-docs` topic, or the index `--elasticsearch-index` (default `candidate-docs`) on `--elasticsearch-hosts` (comma-separated URLs), always as JSON. The module is not shaded; to run it on a cluster, build a job jar that bundles it with its dependencies. `mvn verify -P integration-tests` runs the same job against Kafka, Schema Registry and Elasticsearch in Docker.
+
+## License
+
+Apache License 2.0; see [LICENSE](LICENSE).
