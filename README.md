@@ -81,19 +81,19 @@ DataStream<Change<CandidateDoc>> documents = candidateLevel.assemble(
         CANDIDATE_DOC);
 ```
 
-- `Changes.from` turns a stream into `Upsert`s and `Delete`s by id; a `Delete` carries the entity's last value.
+- `Changes.from` turns a stream into `Upsert`s and `Delete`s by id; a `Delete` carries the flagged record as the entity's last value.
 - `Lookup` attaches one dimension to every entity whose lookup key matches, and re-emits those entities when the dimension changes. One `Lookup` enriches once.
 - `Nest` keys a parent and its child slots by parent id and emits one assembled document per parent. Levels chain bottom-up: one level's documents are the next level's children.
-- Deleting a child re-emits its parent's document without it; deleting a parent emits a `Delete` of its document.
+- Deleting a child re-emits its parent's document without it; deleting a parent emits a `Delete` of its document and discards its children; a parent re-created later assembles without them until each child changes again.
 - When an entity's parent key or lookup key changes, it is removed from the old key and added under the new one. A `Delete` is routed by the entity's stored last value, so it reaches the key the entity is actually stored under.
 - Changes for one entity must arrive in order, as they do from a source partitioned by entity id. Documents converge; there is no ordering across entities.
-- State TTL is refreshed on create and write, so a parent or dimension that rarely changes can expire while its children stay active.
+- State TTL is refreshed on create and write, so a parent or dimension that rarely changes can expire while its children stay active. Expiry emits no `Delete`.
 - With `requireMatch(true)`, an entity that moves from a key with a dimension to a key without one keeps its last enriched value downstream until that key gets a dimension or the entity changes again.
 
 | Option | Default |
 |---|---|
-| `NestOptions.parentStateTtl` | none: parent and last-document state live until the parent is deleted |
-| `NestOptions.orphanTimeout` | none: children whose parent never arrives are kept; when set, they are cleared once the timeout passes in processing time without a parent |
+| `NestOptions.parentStateTtl` | none: parent and last-document state live until the parent is deleted, which also discards its children |
+| `NestOptions.orphanTimeout` | none: children whose parent never arrives are kept; when set, they are cleared a timeout after the first orphaned child upsert if the parent is still absent, together with all other children at that key |
 | `ChildOptions.stateTtl` | none: applies to the slot's child state and its routing state |
 | `LookupOptions.stateTtl` | none: applies to entity, dimension and routing state together |
 | `LookupOptions.requireMatch` | `false`: an entity without a dimension is emitted with `null` as the dimension; `true` emits nothing until a dimension exists and deletes enriched entities when it is removed |
@@ -194,7 +194,7 @@ Operator uids and state names come only from the names you give, never from clas
 |---|---|
 | `changes_<name>` | `Changes.from`, and `KafkaChanges.from` after its source |
 | `nest_<name>` | `Nest.assemble` |
-| `nest_<name>_route_<slot>` | each `Nest.child` slot |
+| `nest_<name>_route_<slot>` | `Nest.assemble`, once per child slot |
 | `lookup_<name>` | `Lookup…enrich` |
 | `lookup_<name>_route` | `Lookup…enrich`, routing the entities |
 | `kafka_source_<name>` | `KafkaChanges.from` |
@@ -211,7 +211,7 @@ Operator uids and state names come only from the names you give, never from clas
 | `<name>.dimension` | a `Lookup`'s dimension under one key |
 | `<name>.route.last` | the last value of each `Lookup` entity, for relocation |
 
-The Kafka source keeps its offsets in the connector's own state under `kafka_source_<name>`. The Kafka sink's state, used only with `EXACTLY_ONCE`, lives under `kafka_sink_<name>`. The Elasticsearch sink has no writer state.
+The Kafka source keeps its offsets in the connector's own state under `kafka_source_<name>`. The Kafka sink's state, used only with `EXACTLY_ONCE`, lives under uids derived from `kafka_sink_<name>`. The Elasticsearch sink has no writer state.
 
 ## Example
 
