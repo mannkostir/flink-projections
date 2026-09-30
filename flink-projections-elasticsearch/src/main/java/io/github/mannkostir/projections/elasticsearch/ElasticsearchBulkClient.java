@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
+import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.RestClient;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -49,13 +50,22 @@ final class ElasticsearchBulkClient implements BulkClient {
         } catch (TransportException e) {
             return e.statusCode() > 0 ? RequestFailure.withStatus(e.statusCode(), e.getMessage()) : RequestFailure.unreachable(e.getMessage());
         } catch (IOException e) {
-            return RequestFailure.unreachable(e.toString());
+            return requestFailure(e);
         }
     }
 
     @Override
     public void close() throws IOException {
         transport.close();
+    }
+
+    private static RequestFailure requestFailure(IOException failure) {
+        for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+            if (cause instanceof ResponseException response) {
+                return RequestFailure.withStatus(response.getResponse().getStatusLine().getStatusCode(), response.getMessage());
+            }
+        }
+        return RequestFailure.unreachable(failure.toString());
     }
 
     private static BulkOperation toBulkOperation(PendingOperation operation) {
