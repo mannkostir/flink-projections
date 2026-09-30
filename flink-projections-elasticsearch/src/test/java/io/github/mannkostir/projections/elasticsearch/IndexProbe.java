@@ -26,6 +26,7 @@ final class IndexProbe implements AutoCloseable {
     }
 
     Optional<String> source(String index, String id) throws IOException {
+        requireIndex(index);
         Request request = new Request("GET", "/" + index + "/_source/" + URLEncoder.encode(id, StandardCharsets.UTF_8).replace("+", "%20"));
         try {
             Response response = client.performRequest(request);
@@ -35,6 +36,13 @@ final class IndexProbe implements AutoCloseable {
                 return Optional.empty();
             }
             throw e;
+        }
+    }
+
+    private void requireIndex(String index) throws IOException {
+        int status = client.performRequest(new Request("HEAD", "/" + index)).getStatusLine().getStatusCode();
+        if (status == 404) {
+            throw new IllegalStateException("index '" + index + "' does not exist, so a missing document proves nothing");
         }
     }
 
