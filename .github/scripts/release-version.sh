@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ref_type="$1"
-ref_name="$2"
-dry_run="$3"
+event_name="$1"
+ref_type="$2"
+ref_name="$3"
+dry_run="$4"
 release_tag='^v[0-9]+\.[0-9]+\.[0-9]+$'
 
-if [[ "$ref_type" == "tag" ]]; then
+if [[ "$event_name" == "push" ]] && [[ "$ref_type" == "tag" ]]; then
   if [[ ! "$ref_name" =~ $release_tag ]]; then
     echo "Tag '$ref_name' is not a release tag: use vMAJOR.MINOR.PATCH, for example v0.1.0" >&2
     exit 1
@@ -16,7 +17,7 @@ if [[ "$ref_type" == "tag" ]]; then
   exit 0
 fi
 
-if [[ "$dry_run" == "true" ]]; then
+if [[ "$event_name" == "workflow_dispatch" ]] && [[ "$dry_run" == "true" ]]; then
   echo "version=0.0.0-dryrun"
   echo "publish=false"
   exit 0
