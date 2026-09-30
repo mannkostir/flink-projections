@@ -29,4 +29,9 @@ class FailureHintsTest {
     void unreachableRequestsGetTheGenericHint() {
         assertThat(FailureHints.forRequest(RequestFailure.unreachable("refused"))).contains("restart the job");
     }
+
+    @Test
+    void tooLargeBatchPointsAtTheByteLimit() {
+        assertThat(FailureHints.forRequest(RequestFailure.withStatus(413, "too large"))).contains("maxBatchBytes");
+    }
 }

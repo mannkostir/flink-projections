@@ -11,6 +11,7 @@ import org.elasticsearch.client.RestClient;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.Time;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
@@ -23,6 +24,8 @@ import co.elastic.clients.util.BinaryData;
 import co.elastic.clients.util.ContentType;
 
 final class ElasticsearchBulkClient implements BulkClient {
+    private static final Time SERVER_TIMEOUT = Time.of(t -> t.time("20s"));
+
     private final ElasticsearchTransport transport;
     private final ElasticsearchClient client;
     private final String index;
@@ -42,7 +45,7 @@ final class ElasticsearchBulkClient implements BulkClient {
 
     @Override
     public BulkOutcome send(List<PendingOperation> operations) {
-        BulkRequest request = BulkRequest.of(bulk -> bulk.index(index).operations(operations.stream().map(ElasticsearchBulkClient::toBulkOperation).toList()));
+        BulkRequest request = BulkRequest.of(bulk -> bulk.index(index).timeout(SERVER_TIMEOUT).operations(operations.stream().map(ElasticsearchBulkClient::toBulkOperation).toList()));
         try {
             return itemResults(client.bulk(request));
         } catch (ElasticsearchException e) {

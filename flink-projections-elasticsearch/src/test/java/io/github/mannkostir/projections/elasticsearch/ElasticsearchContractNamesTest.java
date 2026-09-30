@@ -10,6 +10,8 @@ import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSink;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.transformations.PartitionTransformation;
+import org.apache.flink.streaming.runtime.partitioner.KeyGroupStreamPartitioner;
 import org.junit.jupiter.api.Test;
 
 import io.github.mannkostir.projections.Change;
@@ -48,5 +50,15 @@ class ElasticsearchContractNamesTest {
         assertThatThrownBy(() -> ElasticsearchChanges.to("Docs", changes, OPTIONS, new SimpleStringSchema()))
                 .isInstanceOf(ProjectionConfigurationException.class)
                 .hasMessageContaining("'Docs'");
+    }
+
+    @Test
+    void sinkInputIsPartitionedByDocumentId() {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+        DataStreamSink<Change<String>> sink = ElasticsearchChanges.to("docs", changes(env), OPTIONS, new SimpleStringSchema());
+
+        assertThat(sink.getTransformation().getInputs().get(0)).isInstanceOfSatisfying(PartitionTransformation.class,
+                partition -> assertThat(partition.getPartitioner()).isInstanceOf(KeyGroupStreamPartitioner.class));
     }
 }
