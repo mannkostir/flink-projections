@@ -19,7 +19,7 @@ record ItemResults(List<ItemFailure> failures) implements BulkOutcome {
     public List<PendingOperation> retryable(List<PendingOperation> sent, String index) {
         Map<String, PendingOperation> sentById = sent.stream().collect(Collectors.toMap(PendingOperation::id, Function.identity()));
         List<ItemFailure> unsatisfied = failures.stream()
-                .filter(failure -> !sentById.get(failure.id()).isSatisfiedDespite(failure))
+                .filter(failure -> !sentOperation(sentById, failure, index).isSatisfiedDespite(failure))
                 .toList();
         unsatisfied.stream()
                 .filter(failure -> !failure.isTransient())
@@ -29,6 +29,14 @@ record ItemResults(List<ItemFailure> failures) implements BulkOutcome {
                 });
         Set<String> transientIds = unsatisfied.stream().map(ItemFailure::id).collect(Collectors.toSet());
         return sent.stream().filter(operation -> transientIds.contains(operation.id())).toList();
+    }
+
+    private static PendingOperation sentOperation(Map<String, PendingOperation> sentById, ItemFailure failure, String index) {
+        PendingOperation operation = sentById.get(failure.id());
+        if (operation == null) {
+            throw ElasticsearchWriteException.unexpectedItem(index, failure.id());
+        }
+        return operation;
     }
 
     @Override
