@@ -178,6 +178,7 @@
           <configuration>
             <doclint>none</doclint>
             <quiet>true</quiet>
+            <legacyMode>true</legacyMode>
           </configuration>
           <executions>
             <execution>
