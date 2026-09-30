@@ -93,7 +93,7 @@ DataStream<Change<CandidateDoc>> documents = candidateLevel.assemble(
 | Option | Default |
 |---|---|
 | `NestOptions.parentStateTtl` | none: parent and last-document state live until the parent is deleted, which also discards its children |
-| `NestOptions.orphanTimeout` | none: children whose parent never arrives are kept; when set, they are cleared a timeout after the first orphaned child upsert if the parent is still absent, together with all other children at that key |
+| `NestOptions.orphanTimeout` | none: children whose parent never arrives are kept; when set, they are cleared a processing-time timeout after the first orphaned child upsert if the parent is still absent, together with all other children at that key |
 | `ChildOptions.stateTtl` | none: applies to the slot's child state and its routing state |
 | `LookupOptions.stateTtl` | none: applies to entity, dimension and routing state together |
 | `LookupOptions.requireMatch` | `false`: an entity without a dimension is emitted with `null` as the dimension; `true` emits nothing until a dimension exists and deletes enriched entities when it is removed |
