@@ -7,8 +7,8 @@ import java.util.List;
 
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.typeinfo.Types;
-import org.apache.flink.api.dag.Transformation;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSink;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.junit.jupiter.api.Test;
 
@@ -45,10 +45,10 @@ class KafkaContractNamesTest {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStream<Change<String>> changes = env.fromData(List.of(new Upsert<>("a", "x")), Changes.typeInfo(Types.STRING));
 
-        KafkaChanges.to("docs", changes, SINK, new SimpleStringSchema());
+        DataStreamSink<Change<String>> sink = KafkaChanges.to("docs", changes, SINK, new SimpleStringSchema());
 
-        Transformation<?> sink = env.getTransformations().get(env.getTransformations().size() - 1);
-        assertThat(sink.getUid()).isEqualTo("kafka_sink_docs");
+        assertThat(sink.getTransformation().getUid()).isEqualTo("kafka_sink_docs");
+        assertThat(sink.getTransformation().getName()).isEqualTo("kafka_sink_docs");
     }
 
     @Test

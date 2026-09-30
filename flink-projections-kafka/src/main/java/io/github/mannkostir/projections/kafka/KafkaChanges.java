@@ -11,6 +11,7 @@ import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.connector.kafka.sink.KafkaSinkBuilder;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSink;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import io.github.mannkostir.projections.Change;
@@ -39,7 +40,7 @@ public final class KafkaChanges {
         return deletes.toChanges(name, values, id, type);
     }
 
-    public static <T> void to(
+    public static <T> DataStreamSink<Change<T>> to(
             String name,
             DataStream<Change<T>> changes,
             KafkaSinkOptions options,
@@ -49,7 +50,7 @@ public final class KafkaChanges {
         Objects.requireNonNull(options, "options");
         Objects.requireNonNull(format, "format");
         String uid = KafkaContractNames.sinkUid(name);
-        changes.sinkTo(sink(options, format)).uid(uid).name(uid);
+        return changes.sinkTo(sink(options, format)).uid(uid).name(uid);
     }
 
     private static <T> KafkaSource<T> source(KafkaSourceOptions options, DeserializationSchema<T> format, TypeInformation<T> type) {
