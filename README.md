@@ -24,6 +24,7 @@ SQL can express the same joins, but it owns the state. A query change or a Flink
 |---|---|
 | `flink-projections` | The operators: `Changes`, `Nest`, `Lookup` |
 | `flink-projections-kafka` | Kafka topics in as change streams, documents out as upserts and tombstones |
+| `flink-projections-elasticsearch` | Documents into an Elasticsearch 8 or 9 index: index and delete by document id |
 | `flink-projections-examples` | A runnable resume-search job; not published |
 
 ## Dependencies
@@ -31,6 +32,8 @@ SQL can express the same joins, but it owns the state. A query change or a Flink
 Flink is `provided`: your job owns its version. Nothing is shaded or bundled.
 
 `flink-projections-kafka` also treats `flink-connector-kafka` as `provided`. Declare it in your job, at the build that matches your Flink version (`5.0.0-2.2` for Flink 2.2). The module has no Avro, Schema Registry or JSON dependency; you pass Flink's own `DeserializationSchema` and `SerializationSchema`.
+
+`flink-projections-elasticsearch` treats `co.elastic.clients:elasticsearch-java` as `provided`. Declare an 8.x client in your job; it talks to Elasticsearch 8 and, through REST compatibility headers, to Elasticsearch 9. It is tested with client 8.19.22 against Elasticsearch 8.19.22 and 9.5.3. The module has no Jackson dependency: documents are the bytes your `SerializationSchema` produces, sent as they are.
 
 ## Kafka
 
@@ -85,8 +88,40 @@ DeserializationSchema<GenericRecord> candidates =
 
 The example module maps `GenericRecord` to its own records in `AvroRecordReader` and `AvroRecordWriter`.
 
+## Elasticsearch
+
+```java
+ElasticsearchChanges.to(
+        "candidate-docs",
+        documents,
+        ElasticsearchSinkOptions.builder()
+                .hosts("https://es.example.com:9200")
+                .index("candidate-docs")
+                .auth(ElasticsearchAuth.apiKey(System.getenv("ES_API_KEY")))
+                .build(),
+        new JsonSerializationSchema<>());
+```
+
+- An `Upsert` indexes the whole document under `_id` = document id; a `Delete` deletes that `_id`. Both are idempotent: a delete of a missing document, or of a document in a missing index, succeeds.
+- The sink keys the stream by document id before writing, so every change for a document goes to the same writer whatever the sink's parallelism. The writer keeps only the newest change per id and sends one bulk request at a time, synchronously, so a retry can never overtake a newer change: a deleted document does not come back.
+- A bulk is sent when `maxBatchActions` or `maxBatchBytes` is reached, every `flushInterval`, and on every checkpoint. Delivery is at-least-once with no writer state: after a checkpoint completes, everything before it is acknowledged by Elasticsearch. After a restore the replay re-applies changes idempotently; until it catches up, a document can briefly show an older version.
+- Items rejected with 429, 502, 503 or 504, and requests that cannot reach the cluster, are retried with exponential backoff up to `maxRetries`. Any other failure, such as a mapping conflict, a missing index for an upsert with auto-create off, or 401/403, fails the job with `ElasticsearchWriteException` naming the index, the document id, the error and how to fix it.
+- The library never creates indices or mappings; create them, or rely on Elasticsearch's auto-create.
+- TLS uses the JVM truststore. Credentials go in `auth(...)`, never in the host URL.
+- The operator id is `elasticsearch_sink_<name>`.
+
+| Option | Default |
+|---|---|
+| `hosts`, `index` | required; hosts are `http` or `https` URLs without path |
+| `auth` | `ElasticsearchAuth.none()`; also `basic(username, password)` and `apiKey(encodedApiKey)` |
+| `maxBatchActions` | `1000` |
+| `maxBatchBytes` | `5242880` (5 MiB) |
+| `flushInterval` | `Duration.ofSeconds(1)` |
+| `maxRetries` | `8` |
+| `retryBackoff` | `Duration.ofMillis(100)` doubling to `Duration.ofSeconds(10)` |
+
 ## Example
 
 `flink-projections-examples` runs the resume-search projection: candidates, experiences, projects, skills and companies from five topics, joined with `Lookup` and two `Nest` levels, into one document per candidate on `resume.candidate-docs`.
 
-`ResumeSearchJob.main` takes `--bootstrap-servers`, `--format json|avro` (default `json`) and, for Avro, `--schema-registry-url`. The module is not shaded; to run it on a cluster, build a job jar that bundles it with its dependencies. `mvn verify -P integration-tests` runs the same job against Kafka and Schema Registry in Docker.
+`ResumeSearchJob.main` takes `--bootstrap-servers`, `--format json|avro` (default `json`) and, for Avro, `--schema-registry-url`. `--output kafka|elasticsearch` (default `kafka`) picks where documents go: the `resume.candidate-docs` topic, or the index `--elasticsearch-index` (default `candidate-docs`) on `--elasticsearch-hosts` (comma-separated URLs), always as JSON. The module is not shaded; to run it on a cluster, build a job jar that bundles it with its dependencies. `mvn verify -P integration-tests` runs the same job against Kafka, Schema Registry and Elasticsearch in Docker.
