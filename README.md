@@ -1,5 +1,7 @@
 # flink-projections
 
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.mannkostir/flink-projections)](https://central.sonatype.com/artifact/io.github.mannkostir/flink-projections)
+
 Stateful Flink projections of entity streams into documents: joins, grouping and deletes, with state you control.
 
 You have entities arriving as change streams (candidates, their experiences, their skills) and you need one document per candidate in a search index, kept correct as any part changes or disappears. flink-projections is a set of DataStream operators for exactly that pipeline:
