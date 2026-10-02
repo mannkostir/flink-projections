@@ -1,6 +1,7 @@
 # flink-projections
 
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.mannkostir/flink-projections)](https://central.sonatype.com/artifact/io.github.mannkostir/flink-projections)
+[![CI](https://github.com/mannkostir/flink-projections/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mannkostir/flink-projections/actions/workflows/ci.yml)
 
 Stateful Flink projections of entity streams into documents: joins, grouping and deletes, with state you control.
 
