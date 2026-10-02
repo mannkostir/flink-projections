@@ -216,6 +216,20 @@ Operator uids and state names come only from the names you give, never from clas
 
 The Kafka source keeps its offsets in the connector's own state under `kafka_source_<name>`. The Kafka sink's state, used only with `EXACTLY_ONCE`, lives under uids derived from `kafka_sink_<name>`. The Elasticsearch sink has no writer state.
 
+### Public API
+
+Every public type in `flink-projections`, `flink-projections-kafka` and `flink-projections-elasticsearch` is checked by [japicmp](https://siom79.github.io/japicmp/) during `mvn verify` against the release named by `api.baseline.version` in the root `pom.xml`. A binary or source incompatible change fails the build and names the class or method it breaks; additions pass.
+
+An intended break, allowed only in a major version, is accepted by naming it in the japicmp `<excludes>` of the root `pom.xml`:
+
+```xml
+<excludes>
+  <exclude>io.github.mannkostir.projections.NestOptions$Builder#parentStateTtl(java.time.Duration)</exclude>
+</excludes>
+```
+
+After each release, `api.baseline.version` moves to that release and the excludes are cleared.
+
 ## Example
 
 `flink-projections-examples` runs the resume-search projection: candidates, experiences, projects, skills and companies from five topics, joined with `Lookup` and two `Nest` levels, into one document per candidate on `resume.candidate-docs`.

@@ -61,6 +61,9 @@
     <maven-javadoc-plugin.version>3.11.3</maven-javadoc-plugin.version>
     <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
     <central-publishing-maven-plugin.version>0.11.0</central-publishing-maven-plugin.version>
+    <japicmp-maven-plugin.version>0.26.2</japicmp-maven-plugin.version>
+
+    <api.baseline.version>0.1.0</api.baseline.version>
   </properties>
 
   <dependencyManagement>
@@ -187,6 +190,37 @@
               <id>attach-javadocs</id>
               <goals>
                 <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>com.github.siom79.japicmp</groupId>
+          <artifactId>japicmp-maven-plugin</artifactId>
+          <version>${japicmp-maven-plugin.version}</version>
+          <configuration>
+            <oldVersion>
+              <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>${project.artifactId}</artifactId>
+                <version>${api.baseline.version}</version>
+                <type>jar</type>
+              </dependency>
+            </oldVersion>
+            <parameter>
+              <onlyModified>true</onlyModified>
+              <ignoreMissingOldVersion>false</ignoreMissingOldVersion>
+              <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
+              <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
+              <excludes/>
+            </parameter>
+          </configuration>
+          <executions>
+            <execution>
+              <id>check-api-compatibility</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>cmp</goal>
               </goals>
             </execution>
           </executions>
