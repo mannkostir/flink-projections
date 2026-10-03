@@ -5,7 +5,7 @@
 
   <groupId>io.github.mannkostir</groupId>
   <artifactId>flink-projections-parent</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>flink-projections-parent</name>
