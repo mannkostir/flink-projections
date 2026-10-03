@@ -2,6 +2,8 @@ package io.github.mannkostir.projections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
@@ -19,10 +21,14 @@ import org.apache.flink.runtime.state.VoidNamespace;
 import org.apache.flink.runtime.state.VoidNamespaceSerializer;
 import org.apache.flink.streaming.api.operators.co.KeyedCoProcessOperator;
 import org.apache.flink.streaming.util.KeyedTwoInputStreamOperatorTestHarness;
+import org.apache.flink.streaming.util.OperatorSnapshotUtil;
 import org.junit.jupiter.api.Test;
 
 class NestFunctionTest {
     private static final ChildSlot<String> SKILLS = new ChildSlot<>("candidate", "skills", 0);
+    private static final NestOptions ORPHAN_TIMEOUT_100_MS =
+            NestOptions.builder().orphanTimeout(Duration.ofMillis(100)).build();
+    private static final String RELEASE_0_1_0_ORPHAN_TIMERS = resourcePath("nest-orphan-timers-0.1.0.snapshot");
 
     @Test
     void childUpsertWithoutParentIsStoredSilently() throws Exception {
@@ -144,8 +150,7 @@ class NestFunctionTest {
 
     @Test
     void orphanTimeoutClearsChildrenWhenParentAbsent() throws Exception {
-        NestOptions options = NestOptions.builder().orphanTimeout(Duration.ofMillis(100)).build();
-        try (var harness = harness(options, ChildOptions.defaults())) {
+        try (var harness = harness(ORPHAN_TIMEOUT_100_MS, ChildOptions.defaults())) {
             harness.open();
             harness.setProcessingTime(0L);
             harness.processElement2(skill(new Upsert<>("s1", "java@c1")), 1L);
@@ -158,8 +163,7 @@ class NestFunctionTest {
 
     @Test
     void orphanTimeoutKeepsChildrenWhenParentArrived() throws Exception {
-        NestOptions options = NestOptions.builder().orphanTimeout(Duration.ofMillis(100)).build();
-        try (var harness = harness(options, ChildOptions.defaults())) {
+        try (var harness = harness(ORPHAN_TIMEOUT_100_MS, ChildOptions.defaults())) {
             harness.open();
             harness.setProcessingTime(0L);
             harness.processElement2(skill(new Upsert<>("s1", "java@c1")), 1L);
@@ -169,6 +173,50 @@ class NestFunctionTest {
             assertThat(harness.extractOutputValues()).containsExactly(new Upsert<>("c1", "alice[java@c1]"));
             assertThat(stateOf(harness, "c1"))
                     .isEqualTo(new KeyState("alice", Map.of("s1", "java@c1"), "alice[java@c1]"));
+        }
+    }
+
+    @Test
+    void repeatedOrphanUpsertsKeepOneTimerPerKey() throws Exception {
+        try (var harness = harness(ORPHAN_TIMEOUT_100_MS, ChildOptions.defaults())) {
+            harness.open();
+            harness.setProcessingTime(30L);
+            harness.processElement2(skill(new Upsert<>("s1", "java@c1")), 1L);
+            harness.setProcessingTime(140L);
+            harness.processElement2(skill(new Upsert<>("s2", "scala@c1")), 2L);
+            harness.setProcessingTime(190L);
+            harness.processElement2(skill(new Upsert<>("s3", "rust@c1")), 3L);
+
+            assertThat(harness.numProcessingTimeTimers()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void orphanChildrenSurviveUntilDeadlineAfterLastUpsert() throws Exception {
+        try (var harness = harness(ORPHAN_TIMEOUT_100_MS, ChildOptions.defaults())) {
+            harness.open();
+            harness.setProcessingTime(30L);
+            harness.processElement2(skill(new Upsert<>("s1", "java@c1")), 1L);
+            harness.setProcessingTime(140L);
+            harness.processElement2(skill(new Upsert<>("s2", "scala@c1")), 2L);
+            harness.setProcessingTime(317L);
+
+            assertThat(stateOf(harness, "c1"))
+                    .isEqualTo(new KeyState(null, Map.of("s1", "java@c1", "s2", "scala@c1"), null));
+        }
+    }
+
+    @Test
+    void orphanChildrenAreClearedAtDeadlineAfterLastUpsert() throws Exception {
+        try (var harness = harness(ORPHAN_TIMEOUT_100_MS, ChildOptions.defaults())) {
+            harness.open();
+            harness.setProcessingTime(30L);
+            harness.processElement2(skill(new Upsert<>("s1", "java@c1")), 1L);
+            harness.setProcessingTime(140L);
+            harness.processElement2(skill(new Upsert<>("s2", "scala@c1")), 2L);
+            harness.setProcessingTime(318L);
+
+            assertThat(stateOf(harness, "c1")).isEqualTo(KeyState.EMPTY);
         }
     }
 
@@ -191,6 +239,31 @@ class NestFunctionTest {
             assertThat(restored.extractOutputValues()).containsExactly(
                     new Upsert<>("c1", "alice[java@c1, scala@c1]"),
                     new Delete<>("c1", "alice[java@c1, scala@c1]"));
+        }
+    }
+
+    @Test
+    void restoresPendingOrphanTimersFromReleaseSavepoint() throws Exception {
+        try (var restored = harness(ORPHAN_TIMEOUT_100_MS, ChildOptions.defaults())) {
+            restored.initializeState(OperatorSnapshotUtil.readStateHandle(RELEASE_0_1_0_ORPHAN_TIMERS));
+            restored.open();
+
+            assertThat(restored.numProcessingTimeTimers()).isEqualTo(4);
+        }
+    }
+
+    @Test
+    void orphanTimersFromReleaseSavepointClearOnlyOrphanedKeys() throws Exception {
+        try (var restored = harness(ORPHAN_TIMEOUT_100_MS, ChildOptions.defaults())) {
+            restored.initializeState(OperatorSnapshotUtil.readStateHandle(RELEASE_0_1_0_ORPHAN_TIMERS));
+            restored.open();
+            restored.setProcessingTime(140L);
+
+            assertThat(List.of(stateOf(restored, "c1"), stateOf(restored, "c2"), stateOf(restored, "c3")))
+                    .containsExactly(
+                            KeyState.EMPTY,
+                            KeyState.EMPTY,
+                            new KeyState("carol", Map.of("s5", "kotlin@c3"), "carol[kotlin@c3]"));
         }
     }
 
@@ -290,6 +363,14 @@ class NestFunctionTest {
 
     private record KeyState(String parent, Map<String, String> skills, String lastDoc) {
         static final KeyState EMPTY = new KeyState(null, Map.of(), null);
+    }
+
+    private static String resourcePath(String name) {
+        try {
+            return Path.of(NestFunctionTest.class.getClassLoader().getResource(name).toURI()).toString();
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private static SlotChange skill(Change<String> change) {

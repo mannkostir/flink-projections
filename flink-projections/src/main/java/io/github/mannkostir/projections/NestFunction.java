@@ -1,6 +1,5 @@
 package io.github.mannkostir.projections;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +9,7 @@ import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
+import org.apache.flink.streaming.api.TimerService;
 import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
 import org.apache.flink.util.Collector;
 
@@ -68,8 +68,14 @@ final class NestFunction<P, O> extends KeyedCoProcessFunction<String, Change<P>,
     }
 
     private void scheduleOrphanCheck(Context context) {
-        options.orphanTimeout().map(Duration::toMillis).ifPresent(timeout -> context.timerService()
-                .registerProcessingTimeTimer(context.timerService().currentProcessingTime() + timeout));
+        options.orphanTimeout().map(OrphanDeadline::new)
+                .ifPresent(deadline -> rescheduleOrphanCheck(context.timerService(), context.getCurrentKey(), deadline));
+    }
+
+    private static void rescheduleOrphanCheck(TimerService timers, String key, OrphanDeadline orphanDeadline) {
+        long deadline = orphanDeadline.after(key, timers.currentProcessingTime());
+        orphanDeadline.superseded(deadline).forEach(timers::deleteProcessingTimeTimer);
+        timers.registerProcessingTimeTimer(deadline);
     }
 
     @SuppressWarnings("unchecked")
