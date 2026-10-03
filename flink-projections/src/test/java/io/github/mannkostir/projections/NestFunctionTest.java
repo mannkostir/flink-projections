@@ -3,13 +3,20 @@ package io.github.mannkostir.projections;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.flink.api.common.state.MapState;
+import org.apache.flink.api.common.state.MapStateDescriptor;
+import org.apache.flink.api.common.state.ValueState;
+import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.common.typeutils.base.StringSerializer;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.runtime.checkpoint.OperatorSubtaskState;
 import org.apache.flink.runtime.state.VoidNamespace;
+import org.apache.flink.runtime.state.VoidNamespaceSerializer;
 import org.apache.flink.streaming.api.operators.co.KeyedCoProcessOperator;
 import org.apache.flink.streaming.util.KeyedTwoInputStreamOperatorTestHarness;
 import org.junit.jupiter.api.Test;
@@ -18,18 +25,81 @@ class NestFunctionTest {
     private static final ChildSlot<String> SKILLS = new ChildSlot<>("candidate", "skills", 0);
 
     @Test
-    void assemblesParentWithChildren() throws Exception {
+    void childUpsertWithoutParentIsStoredSilently() throws Exception {
+        try (var harness = harness(NestOptions.defaults(), ChildOptions.defaults())) {
+            harness.open();
+            harness.processElement2(skill(new Upsert<>("s1", "java@c1")), 1L);
+
+            assertThat(harness.extractOutputValues()).isEmpty();
+            assertThat(stateOf(harness, "c1")).isEqualTo(new KeyState(null, Map.of("s1", "java@c1"), null));
+        }
+    }
+
+    @Test
+    void childUpsertWithParentEmitsDocument() throws Exception {
+        try (var harness = harness(NestOptions.defaults(), ChildOptions.defaults())) {
+            harness.open();
+            harness.processElement1(new Upsert<>("c1", "alice"), 1L);
+            harness.processElement2(skill(new Upsert<>("s1", "java@c1")), 2L);
+
+            assertThat(harness.extractOutputValues()).last().isEqualTo(new Upsert<>("c1", "alice[java@c1]"));
+            assertThat(stateOf(harness, "c1"))
+                    .isEqualTo(new KeyState("alice", Map.of("s1", "java@c1"), "alice[java@c1]"));
+        }
+    }
+
+    @Test
+    void storedChildDeleteWithParentEmitsDocumentWithoutIt() throws Exception {
+        try (var harness = harness(NestOptions.defaults(), ChildOptions.defaults())) {
+            harness.open();
+            harness.processElement1(new Upsert<>("c1", "alice"), 1L);
+            harness.processElement2(skill(new Upsert<>("s1", "java@c1")), 2L);
+            harness.processElement2(skill(new Delete<>("s1", "java@c1")), 3L);
+
+            assertThat(harness.extractOutputValues()).last().isEqualTo(new Upsert<>("c1", "alice[]"));
+            assertThat(stateOf(harness, "c1")).isEqualTo(new KeyState("alice", Map.of(), "alice[]"));
+        }
+    }
+
+    @Test
+    void unknownChildDeleteEmitsNothing() throws Exception {
+        try (var harness = harness(NestOptions.defaults(), ChildOptions.defaults())) {
+            harness.open();
+            harness.processElement1(new Upsert<>("c1", "alice"), 1L);
+            harness.processElement2(skill(new Delete<>("s9", "rust@c1")), 2L);
+
+            assertThat(harness.extractOutputValues()).containsExactly(new Upsert<>("c1", "alice[]"));
+            assertThat(stateOf(harness, "c1")).isEqualTo(new KeyState("alice", Map.of(), "alice[]"));
+        }
+    }
+
+    @Test
+    void storedChildDeleteWithoutParentRemovesSilently() throws Exception {
+        try (var harness = harness(NestOptions.defaults(), ChildOptions.defaults())) {
+            harness.open();
+            harness.processElement2(skill(new Upsert<>("s1", "java@c1")), 1L);
+            harness.processElement2(skill(new Delete<>("s1", "java@c1")), 2L);
+
+            assertThat(harness.extractOutputValues()).isEmpty();
+            assertThat(stateOf(harness, "c1")).isEqualTo(KeyState.EMPTY);
+        }
+    }
+
+    @Test
+    void parentUpsertEmitsDocumentWithStoredChildren() throws Exception {
         try (var harness = harness(NestOptions.defaults(), ChildOptions.defaults())) {
             harness.open();
             harness.processElement2(skill(new Upsert<>("s1", "java@c1")), 1L);
             harness.processElement1(new Upsert<>("c1", "alice"), 2L);
 
             assertThat(harness.extractOutputValues()).containsExactly(new Upsert<>("c1", "alice[java@c1]"));
+            assertThat(stateOf(harness, "c1"))
+                    .isEqualTo(new KeyState("alice", Map.of("s1", "java@c1"), "alice[java@c1]"));
         }
     }
 
     @Test
-    void parentDeleteCarriesLastDocument() throws Exception {
+    void parentDeleteEmitsDeleteWithLastDocumentAndClearsEverything() throws Exception {
         try (var harness = harness(NestOptions.defaults(), ChildOptions.defaults())) {
             harness.open();
             harness.processElement1(new Upsert<>("c1", "alice"), 1L);
@@ -37,6 +107,68 @@ class NestFunctionTest {
             harness.processElement1(new Delete<>("c1", "alice"), 3L);
 
             assertThat(harness.extractOutputValues()).last().isEqualTo(new Delete<>("c1", "alice[java@c1]"));
+            assertThat(stateOf(harness, "c1")).isEqualTo(KeyState.EMPTY);
+        }
+    }
+
+    @Test
+    void parentDeleteWithoutParentClearsChildrenSilently() throws Exception {
+        try (var harness = harness(NestOptions.defaults(), ChildOptions.defaults())) {
+            harness.open();
+            harness.processElement2(skill(new Upsert<>("s1", "java@c1")), 1L);
+            harness.processElement1(new Delete<>("c1", "alice"), 2L);
+
+            assertThat(harness.extractOutputValues()).isEmpty();
+            assertThat(stateOf(harness, "c1")).isEqualTo(KeyState.EMPTY);
+        }
+    }
+
+    @Test
+    void relocationMovesChildFromOldParentToNewParent() throws Exception {
+        try (var harness = harness(NestOptions.defaults(), ChildOptions.defaults())) {
+            harness.open();
+            harness.processElement1(new Upsert<>("c1", "alice"), 1L);
+            harness.processElement1(new Upsert<>("c2", "bob"), 2L);
+            harness.processElement2(skill(new Upsert<>("s1", "java@c1")), 3L);
+            harness.processElement2(skill(new Delete<>("s1", "java@c1")), 4L);
+            harness.processElement2(skill(new Upsert<>("s1", "java@c2")), 5L);
+
+            assertThat(harness.extractOutputValues()).endsWith(
+                    new Upsert<>("c1", "alice[]"),
+                    new Upsert<>("c2", "bob[java@c2]"));
+            assertThat(List.of(stateOf(harness, "c1"), stateOf(harness, "c2"))).containsExactly(
+                    new KeyState("alice", Map.of(), "alice[]"),
+                    new KeyState("bob", Map.of("s1", "java@c2"), "bob[java@c2]"));
+        }
+    }
+
+    @Test
+    void orphanTimeoutClearsChildrenWhenParentAbsent() throws Exception {
+        NestOptions options = NestOptions.builder().orphanTimeout(Duration.ofMillis(100)).build();
+        try (var harness = harness(options, ChildOptions.defaults())) {
+            harness.open();
+            harness.setProcessingTime(0L);
+            harness.processElement2(skill(new Upsert<>("s1", "java@c1")), 1L);
+            harness.setProcessingTime(200L);
+
+            assertThat(harness.extractOutputValues()).isEmpty();
+            assertThat(stateOf(harness, "c1")).isEqualTo(KeyState.EMPTY);
+        }
+    }
+
+    @Test
+    void orphanTimeoutKeepsChildrenWhenParentArrived() throws Exception {
+        NestOptions options = NestOptions.builder().orphanTimeout(Duration.ofMillis(100)).build();
+        try (var harness = harness(options, ChildOptions.defaults())) {
+            harness.open();
+            harness.setProcessingTime(0L);
+            harness.processElement2(skill(new Upsert<>("s1", "java@c1")), 1L);
+            harness.processElement1(new Upsert<>("c1", "alice"), 2L);
+            harness.setProcessingTime(200L);
+
+            assertThat(harness.extractOutputValues()).containsExactly(new Upsert<>("c1", "alice[java@c1]"));
+            assertThat(stateOf(harness, "c1"))
+                    .isEqualTo(new KeyState("alice", Map.of("s1", "java@c1"), "alice[java@c1]"));
         }
     }
 
@@ -73,20 +205,6 @@ class NestFunctionTest {
             assertThat(backend.getKeys("candidate.parent", VoidNamespace.INSTANCE)).containsExactly("c1");
             assertThat(backend.getKeys("candidate.child.skills", VoidNamespace.INSTANCE)).containsExactly("c1");
             assertThat(backend.getKeys("candidate.last-doc", VoidNamespace.INSTANCE)).containsExactly("c1");
-        }
-    }
-
-    @Test
-    void orphanTimeoutDropsChildrenOfAbsentParent() throws Exception {
-        NestOptions options = NestOptions.builder().orphanTimeout(Duration.ofMillis(100)).build();
-        try (var harness = harness(options, ChildOptions.defaults())) {
-            harness.open();
-            harness.setProcessingTime(0L);
-            harness.processElement2(skill(new Upsert<>("s1", "java@c1")), 1L);
-            harness.setProcessingTime(200L);
-            harness.processElement1(new Upsert<>("c1", "alice"), 2L);
-
-            assertThat(harness.extractOutputValues()).containsExactly(new Upsert<>("c1", "alice[]"));
         }
     }
 
@@ -150,6 +268,28 @@ class NestFunctionTest {
 
             assertThat(restored.extractOutputValues()).containsExactly(new Upsert<>("c1", "alice[java@c1][acme@c1]"));
         }
+    }
+
+    private static KeyState stateOf(
+            KeyedTwoInputStreamOperatorTestHarness<String, Change<String>, SlotChange, Change<String>> harness,
+            String key) throws Exception {
+        var backend = harness.getOperator().<String>getKeyedStateBackend();
+        backend.setCurrentKey(key);
+        ValueState<String> parent = backend.getPartitionedState(VoidNamespace.INSTANCE, VoidNamespaceSerializer.INSTANCE,
+                new ValueStateDescriptor<>("candidate.parent", Types.STRING));
+        MapState<String, String> skills = backend.getPartitionedState(VoidNamespace.INSTANCE, VoidNamespaceSerializer.INSTANCE,
+                new MapStateDescriptor<>("candidate.child.skills", Types.STRING, Types.STRING));
+        ValueState<String> lastDoc = backend.getPartitionedState(VoidNamespace.INSTANCE, VoidNamespaceSerializer.INSTANCE,
+                new ValueStateDescriptor<>("candidate.last-doc", Types.STRING));
+        Map<String, String> storedSkills = new HashMap<>();
+        for (Map.Entry<String, String> entry : skills.entries()) {
+            storedSkills.put(entry.getKey(), entry.getValue());
+        }
+        return new KeyState(parent.value(), storedSkills, lastDoc.value());
+    }
+
+    private record KeyState(String parent, Map<String, String> skills, String lastDoc) {
+        static final KeyState EMPTY = new KeyState(null, Map.of(), null);
     }
 
     private static SlotChange skill(Change<String> change) {
