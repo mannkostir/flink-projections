@@ -1,0 +1,5 @@
+#
+#Thu Oct 15 05:51:53 GMT+06:00 2026
+no\ classes\ that\ are\ domain\ rules,\ state\ ports\ or\ the\ change\ model\ should\ depend\ on\ classes\ that\ reside\ in\ a\ package\ 'org.apache.flink..'=a0f31bd9-5d9e-422a-a69d-79ff9fe7ab45
+no\ classes\ that\ are\ domain\ rules,\ state\ ports\ or\ the\ change\ model\ should\ depend\ on\ classes\ that\ wrap\ Flink\ in\ the\ core=f215c341-9739-44a9-8aea-db6cfad81bc3
+no\ classes\ that\ reside\ in\ a\ package\ 'io.github.mannkostir.projections'\ should\ depend\ on\ classes\ that\ reside\ in\ any\ package\ ['io.github.mannkostir.projections.kafka..',\ 'io.github.mannkostir.projections.elasticsearch..',\ 'io.github.mannkostir.projections.examples..',\ 'org.apache.kafka..',\ 'org.apache.flink.connector.kafka..',\ 'co.elastic..',\ 'org.elasticsearch..']=27322852-acda-40bd-8c7f-a928cf764292
