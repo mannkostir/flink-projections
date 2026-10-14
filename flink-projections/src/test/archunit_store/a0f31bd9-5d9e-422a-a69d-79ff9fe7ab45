@@ -1,0 +1,5 @@
+Constructor <io.github.mannkostir.projections.RoutingRules.<init>(org.apache.flink.api.java.functions.KeySelector)> has generic parameter type <org.apache.flink.api.java.functions.KeySelector<T, java.lang.String>> with type argument depending on <org.apache.flink.api.java.functions.KeySelector> in (RoutingRules.java:0)
+Constructor <io.github.mannkostir.projections.RoutingRules.<init>(org.apache.flink.api.java.functions.KeySelector)> has parameter of type <org.apache.flink.api.java.functions.KeySelector> in (RoutingRules.java:0)
+Field <io.github.mannkostir.projections.RoutingRules.targetKey> has type <org.apache.flink.api.java.functions.KeySelector> in (RoutingRules.java:0)
+Method <io.github.mannkostir.projections.RoutingRules.movesTarget(java.lang.Object, java.lang.Object)> calls method <org.apache.flink.api.java.functions.KeySelector.getKey(java.lang.Object)> in (RoutingRules.java:30)
+Method <io.github.mannkostir.projections.RoutingRules.movesTarget(java.lang.Object, java.lang.Object)> calls method <org.apache.flink.api.java.functions.KeySelector.getKey(java.lang.Object)> in (RoutingRules.java:30)
