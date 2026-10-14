@@ -1,0 +1,5 @@
+#
+#Thu Oct 15 05:55:43 GMT+06:00 2026
+no\ classes\ that\ reside\ in\ a\ package\ 'io.github.mannkostir.projections.elasticsearch..'\ and\ not\ belong\ to\ the\ Elasticsearch\ bulk\ client\ should\ depend\ on\ classes\ that\ reside\ in\ any\ package\ ['co.elastic..',\ 'org.elasticsearch..',\ 'org.apache.http..']=de0bc8d0-285b-4838-97fc-3b41bef4b948
+no\ classes\ that\ reside\ in\ a\ package\ 'io.github.mannkostir.projections.elasticsearch..'\ and\ not\ belong\ to\ the\ Flink\ sink\ should\ depend\ on\ classes\ that\ reside\ in\ a\ package\ 'org.apache.flink..'=9042b9df-ab6d-4e92-9367-5c49c7ed0945
+no\ classes\ that\ reside\ in\ a\ package\ 'io.github.mannkostir.projections.elasticsearch..'\ should\ depend\ on\ classes\ that\ reside\ in\ any\ package\ ['io.github.mannkostir.projections.kafka..',\ 'io.github.mannkostir.projections.examples..',\ 'org.apache.kafka..',\ 'org.apache.flink.connector.kafka..']=8930df8f-7671-497e-8ef4-8f731477160d
