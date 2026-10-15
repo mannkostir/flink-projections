@@ -63,6 +63,7 @@
     <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
     <central-publishing-maven-plugin.version>0.11.0</central-publishing-maven-plugin.version>
     <japicmp-maven-plugin.version>0.26.2</japicmp-maven-plugin.version>
+    <cyclonedx-maven-plugin.version>2.9.3</cyclonedx-maven-plugin.version>
 
     <api.baseline.version>0.1.0</api.baseline.version>
   </properties>
@@ -230,6 +231,16 @@
               </goals>
             </execution>
           </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.cyclonedx</groupId>
+          <artifactId>cyclonedx-maven-plugin</artifactId>
+          <version>${cyclonedx-maven-plugin.version}</version>
+          <configuration>
+            <outputFormat>json</outputFormat>
+            <outputName>bom</outputName>
+            <skipNotDeployed>false</skipNotDeployed>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
