@@ -230,6 +230,30 @@ An intended break, allowed only in a major version, is accepted by naming it in 
 
 After each release, `api.baseline.version` moves to that release and the excludes are cleared.
 
+## Build checks
+
+### Architecture rules
+
+Each module has an `ArchitectureTest`, run by `mvn verify` with [ArchUnit](https://www.archunit.org/):
+
+- In `flink-projections`, the domain (`*Rules`, the `LevelState` and `LookupState` ports, and `Change`, `Upsert`, `Delete`) depends neither on Flink nor on the core classes that wrap Flink, and the core depends on no adapter.
+- `flink-projections-kafka` and `flink-projections-elasticsearch` do not depend on each other.
+- In `flink-projections-elasticsearch`, only the sink classes use Flink and only `ElasticsearchBulkClient` uses the Elasticsearch client.
+- Packages across all modules are free of cycles.
+
+The rules are frozen: violations that already existed are recorded in each module's `src/test/archunit_store` and tolerated, and any new one fails the build. When a recorded violation is fixed, the test removes it from the store; commit that change. A new rule needs its store entry created once, with `-Darchunit.freeze.store.default.allowStoreCreation=true`.
+
+### Dependency vulnerabilities
+
+CI generates a CycloneDX SBOM of every module's compile, provided and runtime dependencies and checks it against the [OSV](https://osv.dev/) database with a pinned, checksum-verified [osv-scanner](https://google.github.io/osv-scanner/):
+
+```bash
+mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom
+.github/scripts/scan-vulnerabilities.sh target/bom.json
+```
+
+The scanner runs offline against a freshly downloaded copy of the OSV database; it sends nothing about the project anywhere. Known findings that cannot be fixed here are listed in `osv-scanner.toml` with a reason and an expiry date; any other finding fails the build.
+
 ## Example
 
 `flink-projections-examples` runs the resume-search projection: candidates, experiences, projects, skills and companies from five topics, joined with `Lookup` and two `Nest` levels, into one document per candidate on `resume.candidate-docs`.
