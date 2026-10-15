@@ -1,0 +1,144 @@
+[[IgnoredVulns]]
+id = "GHSA-2m67-wjpj-xhg9"
+ignoreUntil = 2027-01-15
+reason = "jackson-core: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-6v53-7c9g-w56r"
+ignoreUntil = 2027-01-15
+reason = "jackson-core: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-72hv-8253-57qq"
+ignoreUntil = 2027-01-15
+reason = "jackson-core: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-7hhh-6rmp-j9qf"
+ignoreUntil = 2027-01-15
+reason = "jackson-core: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-p6pp-m3f8-5c89"
+ignoreUntil = 2027-01-15
+reason = "jackson-core: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-r7wm-3cxj-wff9"
+ignoreUntil = 2027-01-15
+reason = "jackson-core: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-3pjw-73gf-8qr5"
+ignoreUntil = 2027-01-15
+reason = "jackson-databind: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-5gvw-p9qm-jgwh"
+ignoreUntil = 2027-01-15
+reason = "jackson-databind: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-5hh8-q8hv-fr38"
+ignoreUntil = 2027-01-15
+reason = "jackson-databind: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-5jmj-h7xm-6q6v"
+ignoreUntil = 2027-01-15
+reason = "jackson-databind: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-9fxm-vc8v-hj55"
+ignoreUntil = 2027-01-15
+reason = "jackson-databind: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-cxp5-3px4-pw24"
+ignoreUntil = 2027-01-15
+reason = "jackson-databind: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-gx83-3vf8-gh7j"
+ignoreUntil = 2027-01-15
+reason = "jackson-databind: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-hgj6-7826-r7m5"
+ignoreUntil = 2027-01-15
+reason = "jackson-databind: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-j3rv-43j4-c7qm"
+ignoreUntil = 2027-01-15
+reason = "jackson-databind: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-mhm7-754m-9p8w"
+ignoreUntil = 2027-01-15
+reason = "jackson-databind: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-q4xh-88c3-wmh7"
+ignoreUntil = 2027-01-15
+reason = "jackson-databind: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-rcqc-6cw3-h962"
+ignoreUntil = 2027-01-15
+reason = "jackson-databind: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-rmj7-2vxq-3g9f"
+ignoreUntil = 2027-01-15
+reason = "jackson-databind: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-vvgp-rfg2-7rr6"
+ignoreUntil = 2027-01-15
+reason = "jackson-databind: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-wjgm-6hv5-3cvf"
+ignoreUntil = 2027-01-15
+reason = "jackson-databind: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-wv8q-qhhj-9h54"
+ignoreUntil = 2027-01-15
+reason = "jackson-databind: Reaches the build only through flink-connector-kafka (com.fasterxml 2.18.2) and elasticsearch-java (tools.jackson 3.0.0), provided in the published modules and compile scope only in the unpublished example. Baselined until the connector and client upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-343h-94h5-c4wr"
+ignoreUntil = 2027-01-15
+reason = "lz4-java: Reaches the build only through kafka-clients and flink-runtime, provided in the published modules and runtime scope only in the unpublished example. Baselined until Flink and the Kafka connector upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-4v53-57pg-c464"
+ignoreUntil = 2027-01-15
+reason = "lz4-java: Reaches the build only through kafka-clients and flink-runtime, provided in the published modules and runtime scope only in the unpublished example. Baselined until Flink and the Kafka connector upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-6cx8-rjf8-pr8g"
+ignoreUntil = 2027-01-15
+reason = "lz4-java: Reaches the build only through kafka-clients and flink-runtime, provided in the published modules and runtime scope only in the unpublished example. Baselined until Flink and the Kafka connector upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-gm45-99xc-r7wv"
+ignoreUntil = 2027-01-15
+reason = "lz4-java: Reaches the build only through kafka-clients and flink-runtime, provided in the published modules and runtime scope only in the unpublished example. Baselined until Flink and the Kafka connector upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-mcr4-qmvw-px4g"
+ignoreUntil = 2027-01-15
+reason = "lz4-java: Reaches the build only through kafka-clients and flink-runtime, provided in the published modules and runtime scope only in the unpublished example. Baselined until Flink and the Kafka connector upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-xx22-p4ch-683r"
+ignoreUntil = 2027-01-15
+reason = "lz4-java: Reaches the build only through kafka-clients and flink-runtime, provided in the published modules and runtime scope only in the unpublished example. Baselined until Flink and the Kafka connector upgrade."
+
+[[IgnoredVulns]]
+id = "GHSA-rcgg-9c38-7xpx"
+ignoreUntil = 2027-01-15
+reason = "opentelemetry-api: Reaches the build only through elasticsearch-java, provided in the published modules and runtime scope only in the unpublished example. Baselined until the client upgrade."
